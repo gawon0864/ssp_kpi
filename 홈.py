@@ -229,11 +229,9 @@ h3 {
 </style>
 """
 st.markdown(custom_home_css, unsafe_allow_html=True)
-
 st.markdown('<div class="centered">', unsafe_allow_html=True)
 st.image("logo.gif", width=200)
-st.markdown("<h1>세세아특수강 본부별 주요 추진 목표 및 실적 대시보드</h1>", unsafe_allow_html=True)
-st.markdown("</div>", unsafe_allow_html=True)
+st.markdown("<h1>세아특수강 본부별 주요 추진 목표 및 실적</h1>", unsafe_allow_html=True)
 
 html_main_content = f"""
 <div class="flex-container">
