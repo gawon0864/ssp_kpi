@@ -115,7 +115,7 @@ th, td {
     padding: 3px 6px;  /* 세로 여백 줄임 */
     text-align: center;
     border: 1px solid #ddd;
-    vertical-align: middle;
+    vertical-align: right;
     word-break: keep-all;
     white-space: pre-wrap;
 }
@@ -237,11 +237,11 @@ for i in range(0, len(keys), 2):
 def generate_merged_html_table(df):
     months = [f"{m}월" for m in range(1, 13)]
     header_html = "<tr><th>구분</th>" + "".join(f"<th>{m}</th>" for m in months) + "</tr>"
-    html = "<table><thead>" + header_html + "</thead><tbody>"
+    html = "<table class='textual'><thead>" + header_html + "</thead><tbody>"
 
     for idx, row in df.iterrows():
         html += "<tr>"
-        html += f"<td>{row['구분']}</td>"
+        html += f"<td style='text-align:left'>{row['구분']}</td>"
 
         if row['구분'] == "목표":
             last_val_key = None
@@ -258,11 +258,11 @@ def generate_merged_html_table(df):
                 else:
                     if last_val_key is not None:
                         if span > 1:
-                            html += f"<td colspan='{span}'>{last_display_val}</td>"
+                            html += f"<td colspan='{span}' style='text-align:left'>{last_display_val}</td>"
                         else:
-                            html += f"<td>{last_display_val}</td>"
+                            html += f"<td style='text-align:left'>{last_display_val}</td>"
                     if key is None:
-                        html += f"<td>-</td>"
+                        html += f"<td style='text-align:left'>-</td>"
                         last_val_key = None
                         span = 0
                     else:
@@ -270,18 +270,17 @@ def generate_merged_html_table(df):
                         last_display_val = display_val
                         span = 1
 
-            # 마지막 값 따로 처리
             if last_val_key is not None and span > 0:
                 if span > 1:
-                    html += f"<td colspan='{span}'>{last_display_val}</td>"
+                    html += f"<td colspan='{span}' style='text-align:left'>{last_display_val}</td>"
                 else:
-                    html += f"<td>{last_display_val}</td>"
+                    html += f"<td style='text-align:left'>{last_display_val}</td>"
 
         else:  # 실적 행은 병합 없이 출력
             for m in months:
                 val = row.get(m, "")
                 val = "-" if pd.isna(val) or val == "" else str(val)
-                html += f"<td>{val}</td>"
+                html += f"<td style='text-align:left'>{val}</td>"
 
         html += "</tr>"
 
