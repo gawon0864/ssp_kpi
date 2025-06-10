@@ -12,7 +12,7 @@ REDIRECT_URI = st.secrets["google_oauth"]["REDIRECT_URI"]
 
 # ======== 메인 대시보드 ========
 st.set_page_config(
-    page_title="세아특수강 본부별 성과관리 대시보드",
+    page_title="세아특수강 본부별 주요 추진 목표 및 실적 대시보드",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -232,8 +232,7 @@ st.markdown(custom_home_css, unsafe_allow_html=True)
 
 st.markdown('<div class="centered">', unsafe_allow_html=True)
 st.image("logo.gif", width=200)
-st.markdown("<h1>세아특수강 본부별 성과관리 대시보드</h1>", unsafe_allow_html=True)
-st.markdown("<h3>본부별 주요 추진 목표 및 실적 관리</h3>", unsafe_allow_html=True)
+st.markdown("<h1>세세아특수강 본부별 주요 추진 목표 및 실적 대시보드</h1>", unsafe_allow_html=True)
 st.markdown("</div>", unsafe_allow_html=True)
 
 html_main_content = f"""
