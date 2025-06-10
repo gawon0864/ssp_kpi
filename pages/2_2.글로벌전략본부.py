@@ -8,7 +8,7 @@ warnings.filterwarnings('ignore')
 
 st.set_page_config(layout="wide", initial_sidebar_state="collapsed")
 
-require_login()  # ⬅️ 로그인 되어 있지 않으면 여기서 차단됨
+require_login()  # 로그인 되어 있지 않으면 여기서 차단됨
 
 # 현재 연도 및 월 정보
 this_year = datetime.today().year
@@ -57,10 +57,13 @@ for uid in numeric_uids["UID"].unique():
         row_실적[f"{m}월"] = m_result
         row_차이[f"{m}월"] = m_result - m_target
 
-        # 누적값은 현재 월 - 1 까지만 집계
+        # 누적값은 현재 월 - 1 까지만 집계, 차이값은 현재 월 - 1 까지만 표시
         if m <= current_month - 1:
             total_목표 += m_target
             total_실적 += m_result
+            row_차이[f"{m}월"] = m_result - m_target
+        else:
+            row_차이[f"{m}월"] = None
 
     row_목표["누적"] = total_목표
     row_실적["누적"] = total_실적
@@ -284,7 +287,6 @@ def generate_merged_html_table(df):
 
     html += "</tbody></table>"
     return custom_css + html
-
 
 
 
