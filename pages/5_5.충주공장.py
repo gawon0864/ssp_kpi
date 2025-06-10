@@ -116,7 +116,7 @@ table {
 }
 th, td {
     padding: 3px 6px;  /* 세로 여백 줄임 */
-    text-align: center;
+    text-align: right;
     border: 1px solid #ddd;
     vertical-align: right;
     word-break: keep-all;
