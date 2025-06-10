@@ -1,6 +1,7 @@
 # auth.py
 import streamlit as st
-from config import ALLOWED_USERS
+
+ALLOWED_USERS = st.secrets["admin"]["allowed_emails"]
 
 def require_login():
     user = st.session_state.get("user")
