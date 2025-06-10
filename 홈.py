@@ -4,7 +4,11 @@ from datetime import datetime
 import streamlit.components.v1 as components
 import requests as py_requests
 from urllib.parse import urlencode
-from config import GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, REDIRECT_URI
+
+
+GOOGLE_CLIENT_ID = st.secrets["GOOGLE_CLIENT_ID"]
+GOOGLE_CLIENT_SECRET = st.secrets["GOOGLE_CLIENT_SECRET"]
+REDIRECT_URI = st.secrets["REDIRECT_URI"]
 
 # ======== 메인 대시보드 ========
 st.set_page_config(
