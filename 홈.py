@@ -152,6 +152,11 @@ custom_home_css = """
 <style>
 body {
     background-color: #ffffff;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+.block-container {
+    padding-top: 1rem !important;
 }
 .centered {
     display: flex;
