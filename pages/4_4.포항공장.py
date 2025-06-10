@@ -16,10 +16,9 @@ current_month = datetime.today().month
 months = list(range(1, 13))
 
 # CSV 파일 불러오기
-from config import GOOGLE_SHEET_CSV_PATHS
-ph_target_path = GOOGLE_SHEET_CSV_PATHS["ph_target_url"]
-ph_result_path = GOOGLE_SHEET_CSV_PATHS["ph_result_url"]
-memo_path = GOOGLE_SHEET_CSV_PATHS["memo_url"]
+ph_target_path = st.secrets["google_sheets"]["ph_target_url"]
+ph_result_path = st.secrets["google_sheets"]["ph_result_url"]
+memo_path = st.secrets["google_sheets"]["memo_url"]
 
 @st.cache_data
 def load_data():
