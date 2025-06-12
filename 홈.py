@@ -153,16 +153,6 @@ h1 {
     font-size: 15px;
     line-height: 1.5;
 }
-.update-box {
-    background-color: #e3f2fd;
-    padding: 12px 16px;
-    margin: 30px auto 10px;
-    width: 90%;
-    border-radius: 6px;
-    font-size: 14px;
-    color: #1e3a8a;
-    text-align: center;
-}
 </style>
 """
 st.markdown(custom_home_css, unsafe_allow_html=True)
@@ -267,13 +257,7 @@ with col2:
     fig_price = create_price_chart(df_price)
     st.plotly_chart(fig_price, use_container_width=True)
 
-# ======== 하단 업데이트 안내 + 푸터 ========
-st.markdown("""
-<div class="update-box">
-✅ 최근 업데이트: <strong>2025-05-27</strong> 기준 데이터가 반영되었습니다.
-</div>
-""", unsafe_allow_html=True)
-
+# ======== 푸터 ========
 st.markdown("""
 <style>
 .footer {
