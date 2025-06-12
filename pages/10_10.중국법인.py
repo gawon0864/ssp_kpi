@@ -20,7 +20,7 @@ cn_target_path = st.secrets["google_sheets"]["cn_target_url"]
 cn_result_path = st.secrets["google_sheets"]["cn_result_url"]
 memo_path = st.secrets["google_sheets"]["memo_url"]
 
-@st.cache_data
+@st.cache_data(ttl=1800)
 def load_data():
     df_target = pd.read_csv(cn_target_path)
     df_result = pd.read_csv(cn_result_path)
