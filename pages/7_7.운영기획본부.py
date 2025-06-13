@@ -65,9 +65,9 @@ for uid in numeric_uids["UID"].unique():
         else:
             row_차이[f"{m}월"] = None
 
-    row_목표["누적"] = total_목표
-    row_실적["누적"] = total_실적
-    row_차이["누적"] = total_실적 - total_목표
+    #row_목표["누적"] = total_목표
+    #row_실적["누적"] = total_실적
+    #row_차이["누적"] = total_실적 - total_목표
     row_실적["주요 추진 목표"] = ""
     row_차이["주요 추진 목표"] = ""
 
@@ -224,7 +224,7 @@ for i in range(0, len(keys), 2):
             unit_html = f"<div style='text-align:right; font-size:13px; color:#666; margin-bottom:2px;'>[단위: {unit_text}]</div>"
 
             # KPI 표 출력
-            df_display = df_single.drop(columns=["주요 추진 목표"])
+            df_display = df_single.drop(columns=["주요 추진 목표", "누적"], errors="ignore")
             styled = df_display.style.apply(highlight_row_if_diff, axis=1).format(format_dict, na_rep="-")
             html_code = styled.to_html(index=False)
 
