@@ -192,8 +192,8 @@ for i in range(0, len(keys), 2):
                 y=df_plot["누적 목표"],
                 name="누적 목표",
                 mode="lines+markers",
-                line=dict(color="#ff7f0e", width=2),
-                marker=dict(color="#ffffff", line=dict(color="#ff7f0e", width=2), size=6),
+                line=dict(color="#ff7f0e", width=2.5),
+                marker=dict(color="#ffffff", line=dict(color="#ff7f0e", width=1.5), size=6),
                 yaxis="y2"
             ))
 
@@ -203,8 +203,8 @@ for i in range(0, len(keys), 2):
                 y=df_plot["누적 실적"],
                 name="누적 실적",
                 mode="lines+markers",
-                line=dict(color="#e31a1c", width=2),
-                marker=dict(color="#ffffff", line=dict(color="#e31a1c", width=2), size=6),
+                line=dict(color="#e31a1c", width=2.5),
+                marker=dict(color="#ffffff", line=dict(color="#e31a1c", width=1.5), size=6),
                 yaxis="y2"
             ))
 
@@ -221,6 +221,13 @@ for i in range(0, len(keys), 2):
 
             st.plotly_chart(fig, use_container_width=True, key=f"plot_{uid}")
 
+            unit = df_target[df_target["UID"] == uid]["단위"].iloc[0]
+
+            # 연간 목표 (1~12월 전체 합산 기준)
+            df_uid = df_result[df_result["UID"] == uid].copy()
+            df_uid["목표"] = pd.to_numeric(df_uid["목표"], errors="coerce").fillna(0)
+            yearly_goal = df_uid[df_uid["월"].between(1, 12)]["목표"].sum()
+
             # 단위 가져오기
             unit_text = df_target[df_target["UID"] == uid]["단위"].iloc[0]
             unit_html = f"<div style='text-align:right; font-size:13px; color:#666; margin-bottom:2px;'>[단위: {unit_text}]</div>"
@@ -230,9 +237,20 @@ for i in range(0, len(keys), 2):
             styled = df_display.style.apply(highlight_row_if_diff, axis=1).format(format_dict, na_rep="-")
             html_code = styled.to_html(index=False)
 
-            # 단위 + 표 함께 출력
-            st.markdown(f"<div style='overflow-x:auto'>{unit_html + custom_css + html_code}</div>", unsafe_allow_html=True)
+            # 왼쪽은 연간목표, 오른쪽은 단위 표시 (한 줄에)
+            st.markdown(
+                f"""
+                <div style='display:flex; justify-content:space-between; font-size:13px; font-weight:500; margin-bottom:2px;'>
+                    <div style='color:#666;'>[연간목표: {int(yearly_goal):,}{unit}]</div>
+                    <div style='color:#666;'>[단위: {unit}]</div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+            # 표 출력
+            st.markdown(f"<div style='overflow-x:auto'>{custom_css + html_code}</div>", unsafe_allow_html=True)
 
+            
 
 # 정성 KPI 중 목표가 중복되면 열 병합
 def generate_merged_html_table(df):
