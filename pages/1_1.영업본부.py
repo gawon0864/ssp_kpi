@@ -170,6 +170,8 @@ for i in range(0, len(keys), 2):
             df_plot["누적 목표"] = df_plot["목표"].cumsum()
             df_plot["누적 실적"] = df_plot["실적"].cumsum()
 
+            unit = df_target[df_target["UID"] == uid]["단위"].iloc[0]
+
             # 혼합형 그래프 생성
             fig = go.Figure()
 
@@ -178,7 +180,8 @@ for i in range(0, len(keys), 2):
                 x=df_plot["월"],
                 y=df_plot["목표"],
                 name="월별 목표",
-                marker_color="#333f50"
+                marker_color="#333f50",
+                hovertemplate=f'%{{y:,.0f}}{unit}, 월별 목표<extra></extra>'
             ))
 
             # 월별 막대: 실적
@@ -186,7 +189,8 @@ for i in range(0, len(keys), 2):
                 x=df_plot["월"],
                 y=df_plot["실적"],
                 name="월별 실적",
-                marker_color="#8497b0"
+                marker_color="#8497b0",
+                hovertemplate=f'%{{y:,.0f}}{unit}, 월별 실적<extra></extra>'
             ))
 
             # 선: 누적 목표
@@ -197,7 +201,8 @@ for i in range(0, len(keys), 2):
                 mode="lines+markers",
                 line=dict(color="#ff7f0e", width=2.5),
                 marker=dict(color="#ffffff", line=dict(color="#ff7f0e", width=1.5), size=6),
-                yaxis="y2"
+                yaxis="y2",
+                hovertemplate=f'%{{y:,.0f}}{unit}, 누적 목표<extra></extra>'
             ))
 
             # 선: 누적 실적
@@ -208,7 +213,8 @@ for i in range(0, len(keys), 2):
                 mode="lines+markers",
                 line=dict(color="#e31a1c", width=2.5),
                 marker=dict(color="#ffffff", line=dict(color="#e31a1c", width=1.5), size=6),
-                yaxis="y2"
+                yaxis="y2",
+                hovertemplate=f'%{{y:,.0f}}{unit}, 누적 실적<extra></extra>'
             ))
 
             # 레이아웃 설정
@@ -224,7 +230,6 @@ for i in range(0, len(keys), 2):
 
             st.plotly_chart(fig, use_container_width=True, key=f"plot_{uid}")
 
-            unit = df_target[df_target["UID"] == uid]["단위"].iloc[0]
 
             # 연간 목표 (1~12월 전체 합산 기준)
             df_uid = df_result[df_result["UID"] == uid].copy()
@@ -250,7 +255,7 @@ for i in range(0, len(keys), 2):
                 """,
                 unsafe_allow_html=True
             )
-            # 단위 + 표 함께 출력
+            # 표 출력
             st.markdown(f"<div style='overflow-x:auto'>{custom_css + html_code}</div>", unsafe_allow_html=True)
 
             

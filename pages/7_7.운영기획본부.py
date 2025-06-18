@@ -181,6 +181,7 @@ for i in range(0, len(keys), 2):
                     if df_plot.loc[idx, "실적"] == 0:
                         df_plot.loc[idx, "실적"] = last_value
 
+            unit = df_target[df_target["UID"] == uid]["단위"].iloc[0]
 
             # 혼합형 그래프 생성
             fig = go.Figure()
@@ -193,6 +194,7 @@ for i in range(0, len(keys), 2):
                 mode="lines+markers",
                 line=dict(color="#333f50", width=2),
                 marker=dict(color="#ffffff", line=dict(color="#333f50", width=2), size=6),
+                hovertemplate=f'%{{y:,.0f}}{unit}, 월별 목표<extra></extra>'
             ))
 
             # 월별 실적: 선 그래프
@@ -203,7 +205,7 @@ for i in range(0, len(keys), 2):
                 mode="lines+markers",
                 line=dict(color="#8497b0", width=2),
                 marker=dict(color="#ffffff", line=dict(color="#8497b0", width=2), size=6),
-
+                hovertemplate=f'%{{y:,.0f}}{unit}, 월별 실적<extra></extra>'
             ))
 
 
