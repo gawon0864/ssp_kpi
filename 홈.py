@@ -132,13 +132,6 @@ h1 {
     font-weight: 700;
     color: #2c3e50;
 }
-.flex-container {
-    display: flex;
-    justify-content: space-between;
-    gap: 60px;
-    margin: 40px auto;
-    width: 90%;
-}
 .section-label {
     font-size: 16px;
     color: #000000;
@@ -230,32 +223,67 @@ def create_price_chart(df):
     )
     return fig
 
+# ======== 자동차 생산량 그래프 생성 함수 ========
+kama_path = st.secrets["google_sheets"]["kama_url"]
 
-# ======== 본문 콘텐츠 구성 (좌: 설명 / 우: 그래프) ========
-col1, col2 = st.columns([1, 1])
+@st.cache_data
+def load_data():
+    df_kama = pd.read_csv(kama_path)
+    df_kama.columns = df_kama.columns.str.strip()
+    df_kama["기간"] = df_kama["년"].astype(str) + "-" + df_kama["월"].astype(str).str.zfill(2)
+    return df_kama
 
-with col1:
+def create_vehicle_production_chart():
+    df = load_data()
+
+    fig = go.Figure()
+    fig.add_trace(go.Bar(x=df["기간"], y=df["국내생산"], name="국내생산", marker_color="#3399FF"))
+    fig.add_trace(go.Bar(x=df["기간"], y=df["해외생산"], name="해외생산", marker_color="#FF9933"))
+    fig.add_trace(go.Bar(x=df["기간"], y=df["KD"], name="KD", marker_color="#999999"))
+
+    fig.update_layout(
+        barmode='stack',
+        title="🚗 자동차 생산량 추이 (국내/해외/KD)",
+        xaxis_title="기간",
+        yaxis_title="생산량",
+        height=500,
+        margin=dict(t=80, b=40, l=40, r=20),
+        xaxis_tickangle=-45,
+        legend=dict(orientation="h", x=0.5, xanchor="center", y=1.15)
+    )
+    return fig
+
+# ======== 본문 콘텐츠 구성 ========
+top_left, top_right = st.columns([1, 1])
+
+with top_left:
     st.markdown("<div class='section-label'>📌 대시보드 개요</div>", unsafe_allow_html=True)
     st.markdown("""
     <div class='card'>
         세아특수강의 본부별 주요 추진 목표 및 실적을 체계적으로 관리하기 위한 DX 기반 성과관리 시스템입니다.<br>
         당월 기준 실적 비교, 누적 달성률, 메모 기반 질적 피드백 등을 한눈에 확인할 수 있습니다.
     </div>
-    <div class='section-label'>📂 대시보드 구성</div>
-    <div class='card'>🔹 <strong>정량 지표</strong>: 수치 기반의 주요 목표를 월별로 집계 및 시각화</div>
-    <div class='card'>🔹 <strong>정성 지표</strong>: 정성적 활동 기록을 월별로 정리</div>
-    <div class='card'>🔹 <strong>월별 메모</strong>: 각 본부별 월간 이슈 및 활동 메모 관리</div>
-    <div class='section-label'>🎯 활용 목적</div>
+    """, unsafe_allow_html=True)
+
+with top_right:
+    st.markdown("<div class='section-label'>🎯 활용 목적</div>", unsafe_allow_html=True)
+    st.markdown("""
     <div class='card'>
         주요 추진 목표 달성 현황을 직관적으로 파악하고, 월별 실행 성과와 차이를 분석하며<br>
         전략 방향성을 개선하기 위한 실시간 참고 자료로 사용 가능합니다.
     </div>
     """, unsafe_allow_html=True)
 
-with col2:
+bottom_left, bottom_right = st.columns([1, 1])
+
+with bottom_left:
     df_price = fetch_raw_material_data()
     fig_price = create_price_chart(df_price)
     st.plotly_chart(fig_price, use_container_width=True)
+
+with bottom_right:
+    fig_production = create_vehicle_production_chart()
+    st.plotly_chart(fig_production, use_container_width=True)
 
 # ======== 푸터 ========
 st.markdown("""
