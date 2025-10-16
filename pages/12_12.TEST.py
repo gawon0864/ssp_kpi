@@ -143,12 +143,14 @@ thead {
 textual_css = """
 <style>
 .textual-wrap {
-    overflow: auto;          /* 가로/세로 스크롤 */
-    max-height: 420px;       /* 세로 고정 높이 - 필요시 조정 */
+    overflow: auto;
+    max-height: 75vh;   /* ← 세로 높이를 화면의 75%로 */
+    /* 필요하면 상한도 함께: max-height: min(85vh, 1000px); */
     border: 1px solid #ddd;
     border-radius: 6px;
     background: #fff;
 }
+
 
 /* 표 자체는 고정 레이아웃 + 넓이 고정 -> 가로 스크롤 유도 */
 table.textual {
