@@ -143,19 +143,16 @@ thead {
 textual_css = """
 <style>
 .textual-wrap {
-    overflow: auto;
-    max-height: 75vh;   /* ← 세로 높이를 화면의 75%로 */
-    /* 필요하면 상한도 함께: max-height: min(85vh, 1000px); */
+    overflow-y: auto;          /* 세로 스크롤만 */
+    overflow-x: hidden;        /* 가로 스크롤 제거 */
+    max-height: 80vh;          /* 화면 높이의 80%까지 보여주기 */
     border: 1px solid #ddd;
     border-radius: 6px;
     background: #fff;
 }
 
-
-/* 표 자체는 고정 레이아웃 + 넓이 고정 -> 가로 스크롤 유도 */
 table.textual {
-    table-layout: fixed;
-    width: 1600px;           /* 가로 고정 폭 - 필요시 1200~2000px 사이로 조절 */
+    width: 100%;
     border-collapse: collapse;
     font-family: 'Noto Sans KR', sans-serif;
     font-size: 13px;
@@ -168,39 +165,14 @@ table.textual th, table.textual td {
     vertical-align: top;
     text-align: left;
     word-wrap: break-word;
-    overflow-wrap: anywhere;
-    white-space: normal;
+    white-space: pre-wrap;
 }
-
-/* 헤더 고정 */
-table.textual thead th {
+thead {
     position: sticky;
     top: 0;
-    z-index: 3;
-    background: #f7f7f7;
+    background-color: #f7f7f7;
+    font-weight: bold;
 }
-
-/* 첫 번째 열(구분) 고정 */
-table.textual td:first-child, 
-table.textual th:first-child {
-    position: sticky;
-    left: 0;
-    z-index: 2;
-    background: #fff;
-}
-
-/* 컬럼 최소/최대 폭 (월 컬럼) */
-table.textual td, table.textual th {
-    min-width: 110px;
-    max-width: 140px;
-}
-
-/* 셀 내부도 길면 스크롤하고 싶다면 아래 주석 해제 후 <td class='textual-cell'> 사용
-.textual-cell {
-    max-height: 7.2em;   // 대략 6줄
-    overflow: auto;
-}
-*/
 </style>
 """
 
@@ -315,65 +287,28 @@ for i in range(0, len(keys), 2):
 # ─────────────────────────────────────────────────────────────
 # 정성 KPI 렌더 함수 (병합 유지, CSS는 밖에서 주입)
 # ─────────────────────────────────────────────────────────────
-def generate_merged_html_table(df):
+def generate_vertical_html_table(df):
     months = [f"{m}월" for m in range(1, 13)]
-    header_html = "<tr><th>구분</th>" + "".join(f"<th>{m}</th>" for m in months) + "</tr>"
-    html = "<table class='textual'><thead>" + header_html + "</thead><tbody>"
+    html = "<table class='textual'><thead><tr><th>월</th><th>목표</th><th>실적</th></tr></thead><tbody>"
 
-    for _, row in df.iterrows():
-        html += "<tr>"
-        html += f"<td>{row['구분']}</td>"
+    # 목표/실적 두 줄씩 세로로 내려가는 구조
+    for m in months:
+        target_val = df[df["구분"] == "목표"][m].values[0] if m in df.columns else "-"
+        result_val = df[df["구분"] == "실적"][m].values[0] if m in df.columns else "-"
 
-        if row['구분'] == "목표":
-            last_val_key = None
-            span = 0
+        target_val = "-" if pd.isna(target_val) or target_val == "" else str(target_val)
+        result_val = "-" if pd.isna(result_val) or result_val == "" else str(result_val)
 
-            for m in months:
-                raw_val = row.get(m, "")
-                is_empty = pd.isna(raw_val) or raw_val == ""
-                key = None if is_empty else str(raw_val)
-                display_val = "-" if is_empty else str(raw_val)
-
-                if key is not None and key == last_val_key:
-                    span += 1
-                else:
-                    if last_val_key is not None:
-                        if span > 1:
-                            html += f"<td colspan='{span}'>{last_display_val}</td>"
-                        else:
-                            html += f"<td>{last_display_val}</td>"
-                    if key is None:
-                        html += "<td>-</td>"
-                        last_val_key = None
-                        span = 0
-                    else:
-                        last_val_key = key
-                        last_display_val = display_val
-                        span = 1
-
-            if last_val_key is not None and span > 0:
-                if span > 1:
-                    html += f"<td colspan='{span}'>{last_display_val}</td>"
-                else:
-                    html += f"<td>{last_display_val}</td>"
-
-        else:
-            # 실적 행은 병합 없이 그대로
-            for m in months:
-                val = row.get(m, "")
-                val = "-" if pd.isna(val) or val == "" else str(val)
-                html += f"<td>{val}</td>"
-
-        html += "</tr>"
+        html += f"<tr><td>{m}</td><td>{target_val}</td><td>{result_val}</td></tr>"
 
     html += "</tbody></table>"
     return html
+
 
 # ─────────────────────────────────────────────────────────────
 # 정성 KPI 출력 (스크롤/고정폭 적용)
 # ─────────────────────────────────────────────────────────────
 if not df_textual_fixed.empty:
-    # 정성 전용 CSS는 한 번만 주입
     st.markdown(textual_css, unsafe_allow_html=True)
 
     for uid in textual_uids["UID"].unique():
@@ -384,13 +319,9 @@ if not df_textual_fixed.empty:
         df_kpi = df_textual_fixed[df_textual_fixed["UID"] == uid].copy()
         df_display = df_kpi.drop(columns=["UID", "주요 추진 목표"])
 
-        merged_html = generate_merged_html_table(df_display)
+        vertical_html = generate_vertical_html_table(df_display)
+        st.markdown(f"<div class='textual-wrap'>{vertical_html}</div>", unsafe_allow_html=True)
 
-        # 가로/세로 스크롤 래퍼로 감싸기
-        st.markdown(
-            f"<div class='textual-wrap'>{merged_html}</div>",
-            unsafe_allow_html=True
-        )
 
 # 메모 표시
 st.markdown("---")
