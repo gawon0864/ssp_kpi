@@ -129,7 +129,7 @@ th, td {
     border: 1px solid #ddd;
     vertical-align: middle;
     word-break: keep-all;
-    white-space: pre-wrap;  /* ✅ 표 안에서도 줄바꿈/여러 칸 공백 보존 */
+    white-space: pre-wrap;  /* 표 안에서도 줄바꿈/여러 칸 공백 보존 */
 }
 thead {
     background-color: #f2f2f2;
@@ -342,7 +342,7 @@ selected_memo = df_memo[
     (df_memo["본부"].str.contains("경영기획본부", na=False))
 ]
 
-# ✅ 메모 출력: 줄바꿈/여러 칸 띄어쓰기 그대로 보존 (white-space: pre-wrap)
+# 메모 출력: 줄바꿈/여러 칸 띄어쓰기 그대로 보존 (white-space: pre-wrap)
 if not selected_memo.empty:
     for _, row in selected_memo.iterrows():
         writer = "" if pd.isna(row.get("입력자", "")) else escape(str(row["입력자"]))
