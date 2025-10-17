@@ -4,6 +4,7 @@ import plotly.graph_objects as go
 from datetime import datetime
 from auth import require_login
 import warnings
+from html import escape  # ✅ 메모 안전 이스케이프 및 공백/줄바꿈 보존용
 warnings.filterwarnings('ignore')
 
 st.set_page_config(layout="wide", initial_sidebar_state="collapsed")
@@ -343,15 +344,18 @@ selected_memo = df_memo[
 ]
 
 
-# 메모 출력
+# 메모 출력: 줄바꿈/여러 칸 띄어쓰기 그대로 보존 (white-space: pre-wrap)
 if not selected_memo.empty:
     for _, row in selected_memo.iterrows():
-        memo_html = row['메모'].replace('\n', '<br>')
-
+        writer = "" if pd.isna(row.get("입력자", "")) else escape(str(row["입력자"]))
+        memo_text = "" if pd.isna(row.get("메모", "")) else escape(str(row["메모"]))
         st.markdown(
-            f"<div style='margin-bottom: 12px; padding: 10px; background-color: #eef5ff; border-left: 5px solid #3a7bd5;'>"
-            f"<div style='font-size: 15px; color: #000;'>{memo_html}</div>"
-            f"</div>",
+            f"""
+            <div style='margin-bottom: 12px; padding: 10px; background-color: #eef5ff; border-left: 5px solid #3a7bd5;'>
+                <div style='margin-bottom:6px; color:#333;'>입력자 : <strong>{writer}</strong></div>
+                <div style='white-space: pre-wrap; font-weight:600;'>{memo_text}</div>
+            </div>
+            """,
             unsafe_allow_html=True
         )
 else:
