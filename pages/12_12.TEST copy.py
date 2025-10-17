@@ -139,42 +139,112 @@ thead {
 </style>
 """
 
-# ⬇️ 정성 표 전용 CSS (세로 스크롤↑ / 가로 스크롤↓)
+# ⬇️ 정성 표 전용 CSS (가독성 강화 + sticky 헤더/열 + 현재월 강조 + 카드형)
 textual_css = """
 <style>
 .textual-wrap {
-    overflow-y: auto;          /* 세로 스크롤 */
-    overflow-x: hidden;        /* 가로 스크롤 제거 */
-    max-height: 80vh;          /* 화면 높이의 80% */
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    background: #fff;
+    overflow-y: auto;
+    overflow-x: hidden;
+    max-height: 78vh;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    background: #ffffff;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
 }
-
 table.textual {
     width: 100%;
-    border-collapse: collapse;
-    font-family: 'Noto Sans KR', sans-serif;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     font-size: 13px;
-    line-height: 1.3;
+    line-height: 1.45;
+    color: #111827;
 }
-
-table.textual th, table.textual td {
-    border: 1px solid #ddd;
-    padding: 6px 8px;
-    vertical-align: top;
-    text-align: left;
-    word-wrap: break-word;
-    white-space: pre-wrap;
-}
-
 table.textual thead th {
     position: sticky;
     top: 0;
-    background-color: #f7f7f7;
-    font-weight: bold;
-    z-index: 2;
+    z-index: 3;
+    background: #f8fafc;
+    color: #374151;
+    font-weight: 700;
+    text-align: left;
+    padding: 10px 12px;
+    border-bottom: 1px solid #e5e7eb;
 }
+table.textual th, table.textual td {
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: top;
+    padding: 8px 12px;
+    word-wrap: break-word;
+    white-space: pre-wrap;
+}
+table.textual th:nth-child(1), table.textual td:nth-child(1) { width: 56px; }
+table.textual th:nth-child(2), table.textual td:nth-child(2) { width: 38%; }
+table.textual th:nth-child(3), table.textual td:nth-child(3) { width: auto; }
+table.textual tbody tr:nth-child(odd)  { background: #fcfcfd; }
+table.textual tbody tr:nth-child(even) { background: #ffffff; }
+table.textual tbody tr:hover { background: #f6faff; }
+table.textual td:nth-child(1), table.textual th:nth-child(1) {
+    position: sticky; left: 0;
+    background: inherit; z-index: 2;
+}
+table.textual td:nth-child(2), table.textual th:nth-child(2) {
+    position: sticky; left: 56px;
+    background: inherit; z-index: 2;
+    border-right: 1px solid #eef2f7;
+}
+.goal-badge {
+    display: inline-block;
+    background: #eef2ff;
+    color: #3447d4;
+    border: 1px solid #d9e1ff;
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-weight: 600;
+    line-height: 1.35;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.6);
+}
+tr.current-row { 
+    background: #fffdf5 !important;
+    box-shadow: inset 3px 0 0 #f59e0b;
+}
+tr.current-row td:nth-child(1) { font-weight: 700; color: #92400e; }
+.textual .result { line-height: 1.6; }
+.muted { color: #9ca3af; }
+.card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 12px;
+}
+.card {
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 12px;
+    background: #ffffff;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+}
+.card .chip {
+    display: inline-block;
+    border-radius: 999px;
+    padding: 2px 8px;
+    font-size: 12px;
+    font-weight: 700;
+    border: 1px solid #e5e7eb;
+    background: #f8fafc;
+    color: #374151;
+    margin-right: 6px;
+}
+.card .goal {
+    display: inline-block;
+    margin-top: 6px;
+    background: #eef2ff;
+    color: #3447d4;
+    border: 1px solid #d9e1ff;
+    border-radius: 8px;
+    padding: 4px 8px;
+    font-weight: 600;
+}
+.card .result { margin-top: 8px; white-space: pre-wrap; }
 </style>
 """
 
@@ -286,41 +356,36 @@ for i in range(0, len(keys), 2):
             st.markdown(f"<div style='overflow-x:auto'>{custom_css + html_code}</div>", unsafe_allow_html=True)
 
 # ─────────────────────────────────────────────────────────────
-# 정성 KPI: 세로 테이블 + '목표' 세로 병합(rowspan)
+# 정성 테이블/카드 HTML 생성 함수 (개선 UI)
 # ─────────────────────────────────────────────────────────────
-def generate_vertical_html_table(df):
-    # df: 열에 '구분', '1월'..'12월', 행은 '목표'와 '실적'
-    months = [f"{m}월" for m in range(1, 13)]
+def generate_vertical_html_table(df, current_month:int):
+    """
+    df: 열에 '구분', '1월'..'12월'만 남긴 상태(두 행: 목표/실적)
+    반환: sticky 헤더/열 + 현재월 하이라이트 적용한 HTML
+    """
+    months_cols = [f"{m}월" for m in range(1, 13)]
 
-    def get_val(kind, m):
-        if m not in df.columns:
-            return "-"
-        s = df[df["구분"] == kind][m]
-        if s.empty:
-            return "-"
+    def val(kind, mcol):
+        s = df[df["구분"] == kind][mcol] if mcol in df.columns else pd.Series(dtype=object)
+        if s.empty: return "-"
         v = s.values[0]
-        return "-" if (pd.isna(v) or v == "") else str(v)
+        if pd.isna(v) or v == "": return "-"
+        return str(v).strip()
 
-    # 월별 목표/실적 리스트
-    rows = []
-    for m in months:
-        rows.append({
-            "month": m,
-            "target": get_val("목표", m),
-            "result": get_val("실적", m),
-        })
+    # 월별 목표/실적 정리
+    rows = [{"month": m, "target": val("목표", m), "result": val("실적", m)} for m in months_cols]
 
-    # 동일 목표 연속 구간(rowspan 대상) 계산
+    # 연속 동일 목표 구간(rowspan) 계산
     groups = []
     i = 0
     while i < len(rows):
         j = i + 1
-        while j < len(rows) and rows[j]["target"] == rows[i]["target"] and rows[i]["target"] != "-":
+        while j < len(rows) and rows[j]["target"] == rows[i]["target"] and rows[i]["target"] not in ("-", ""):
             j += 1
-        groups.append((i, j - 1))  # [i..j-1]가 동일 목표
+        groups.append((i, j - 1))
         i = j
 
-    # HTML 출력
+    # HTML 생성
     html = []
     html.append("<table class='textual'>")
     html.append("<thead><tr><th>월</th><th>목표</th><th>실적</th></tr></thead>")
@@ -329,29 +394,78 @@ def generate_vertical_html_table(df):
     for start, end in groups:
         rowspan = end - start + 1
         for idx in range(start, end + 1):
-            m = rows[idx]["month"]
-            t = rows[idx]["target"]
-            r = rows[idx]["result"]
-
+            m  = rows[idx]["month"]
+            t  = rows[idx]["target"]
+            r  = rows[idx]["result"]
+            tr_class = "current-row" if m == f"{current_month}월" else ""
             if idx == start:
+                # 첫 행
                 if t == "-" or rowspan == 1:
-                    # 병합 불필요/불가
-                    html.append(f"<tr><td>{m}</td><td>{t}</td><td>{r}</td></tr>")
+                    html.append(
+                        f"<tr class='{tr_class}'>"
+                        f"<td>{m}</td>"
+                        f"<td class='muted'>-</td>"
+                        f"<td class='result'>{r if r!='-' else '<span class=\"muted\">-</span>'}</td>"
+                        f"</tr>"
+                    )
                 else:
-                    # 첫 행에만 목표 셀 rowspan 적용
-                    html.append(f"<tr><td>{m}</td><td rowspan='{rowspan}'>{t}</td><td>{r}</td></tr>")
+                    html.append(
+                        f"<tr class='{tr_class}'>"
+                        f"<td>{m}</td>"
+                        f"<td rowspan='{rowspan}'><span class='goal-badge'>{t}</span></td>"
+                        f"<td class='result'>{r if r!='-' else '<span class=\"muted\">-</span>'}</td>"
+                        f"</tr>"
+                    )
             else:
-                # 이어지는 행: 목표 셀 생략(위 rowspan에 포함)
-                html.append(f"<tr><td>{m}</td><td>{r}</td></tr>")
+                # 이어지는 행(목표 셀 생략)
+                html.append(
+                    f"<tr class='{tr_class}'>"
+                    f"<td>{m}</td>"
+                    f"<td class='result'>{r if r!='-' else '<span class=\"muted\">-</span>'}</td>"
+                    f"</tr>"
+                )
 
     html.append("</tbody></table>")
     return "".join(html)
 
+def generate_card_view(df, current_month:int):
+    months_cols = [f"{m}월" for m in range(1, 13)]
+
+    def val(kind, mcol):
+        s = df[df["구분"] == kind][mcol] if mcol in df.columns else pd.Series(dtype=object)
+        if s.empty: return "-"
+        v = s.values[0]
+        return "-" if (pd.isna(v) or v == "") else str(v).strip()
+
+    cards = []
+    for m in months_cols:
+        t = val("목표", m)
+        r = val("실적", m)
+        if t == "-" and r == "-":
+            continue  # 완전 공란 월은 카드 생략
+        chip_html = f"<span class='chip'>{m}{' · 현재' if m == f'{current_month}월' else ''}</span>"
+        goal_html = f"<div class='goal'>{t}</div>" if t != "-" else "<div class='muted'>목표 없음</div>"
+        result_html = f"<div class='result'>{r}</div>" if r != "-" else "<div class='result muted'>실적 없음</div>"
+        cards.append(f"<div class='card'>{chip_html}{goal_html}{result_html}</div>")
+
+    if not cards:
+        return "<div class='muted'>표시할 데이터가 없습니다.</div>"
+    return "<div class='card-grid'>" + "".join(cards) + "</div>"
+
 # ─────────────────────────────────────────────────────────────
-# 정성 KPI 출력 (세로 스크롤↑ / 가로 스크롤↓)
+# 정성 KPI 출력 (향상된 UI: sticky, 현재월 강조, 카드형 대안)
 # ─────────────────────────────────────────────────────────────
 if not df_textual_fixed.empty:
     st.markdown(textual_css, unsafe_allow_html=True)
+
+    # 보기 모드 선택 (표 / 카드)
+    view_mode = st.radio(
+        "정성 KPI 보기 모드",
+        options=["표 보기", "카드 보기"],
+        horizontal=True,
+        index=0,
+        key="textual_view_mode"
+    )
 
     for uid in textual_uids["UID"].unique():
         kpi_name = df_target[df_target["UID"] == uid]["추진 목표"].iloc[0]
@@ -361,8 +475,12 @@ if not df_textual_fixed.empty:
         df_kpi = df_textual_fixed[df_textual_fixed["UID"] == uid].copy()
         df_display = df_kpi.drop(columns=["UID", "주요 추진 목표"])
 
-        vertical_html = generate_vertical_html_table(df_display)
-        st.markdown(f"<div class='textual-wrap'>{vertical_html}</div>", unsafe_allow_html=True)
+        if view_mode == "표 보기":
+            vertical_html = generate_vertical_html_table(df_display, current_month=current_month)
+            st.markdown(f"<div class='textual-wrap'>{vertical_html}</div>", unsafe_allow_html=True)
+        else:
+            card_html = generate_card_view(df_display, current_month=current_month)
+            st.markdown(card_html, unsafe_allow_html=True)
 
 # 메모 표시
 st.markdown("---")
