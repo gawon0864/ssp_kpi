@@ -4,6 +4,7 @@ import plotly.graph_objects as go
 from datetime import datetime
 from auth import require_login
 import warnings
+from html import escape  # ✅ 메모 안전 이스케이프 및 공백/줄바꿈 보존용
 warnings.filterwarnings('ignore')
 
 st.set_page_config(layout="wide", initial_sidebar_state="collapsed")
@@ -13,7 +14,7 @@ require_login()  # 로그인 되어 있지 않으면 여기서 차단됨
 # 현재 연도 및 월 정보
 this_year = datetime.today().year
 current_month = datetime.today().month
-months = list(range(1, 13))
+months = list(range(1, 12 + 1))
 
 # CSV 파일 불러오기
 mp_target_path = st.secrets["google_sheets"]["mp_target_url"]
@@ -30,7 +31,7 @@ def load_data():
     df_memo.columns = df_memo.columns.str.strip()
     return df_target, df_result, df_memo
 
-df_target, df_result, df_memo= load_data()
+df_target, df_result, df_memo = load_data()
 
 # 정량/정성 UID 구분
 numeric_uids = df_target[df_target["지표 유형"] == "정량"]
@@ -47,7 +48,8 @@ for uid in numeric_uids["UID"].unique():
     row_목표 = {"주요 추진 목표": kpi_name, "구분": "목표"}
     row_실적 = {"구분": "실적"}
     row_차이 = {"구분": "목표比"}
-    total_목표 = total_실적 = 0
+    total_목표 = 0
+    total_실적 = 0
 
     for m in months:
         m_df = df_uid[df_uid["월"] == m]
@@ -55,7 +57,6 @@ for uid in numeric_uids["UID"].unique():
         m_result = m_df["실적"].sum()
         row_목표[f"{m}월"] = m_target
         row_실적[f"{m}월"] = m_result
-        row_차이[f"{m}월"] = m_result - m_target
 
         # 누적값은 현재 월 - 1 까지만 집계, 차이값은 현재 월 - 1 까지만 표시
         if m <= current_month - 1:
@@ -74,6 +75,7 @@ for uid in numeric_uids["UID"].unique():
     df_single = pd.DataFrame([row_목표, row_실적, row_차이])
     numeric_kpi_tables[kpi_name] = df_single
 
+# 정수 포맷
 for df in numeric_kpi_tables.values():
     numeric_cols = df.select_dtypes(include=["float", "int"]).columns
     df[numeric_cols] = df[numeric_cols].round(0).astype("Int64")
@@ -99,11 +101,18 @@ df_textual_fixed = pd.DataFrame(textual_kpi_rows)
 def highlight_row_if_diff(row):
     if row["구분"] != "목표比":
         return [''] * len(row)
-    return ['color: blue' if isinstance(v, (int, float)) and v > 0 else
-            'color: red' if isinstance(v, (int, float)) and v < 0 else ''
-            for v in row]
+    return [
+        'color: blue' if isinstance(v, (int, float)) and v > 0 else
+        'color: red' if isinstance(v, (int, float)) and v < 0 else ''
+        for v in row
+    ]
 
-format_dict = {col: "{:,.0f}" for df in numeric_kpi_tables.values() for col in df.columns if pd.api.types.is_numeric_dtype(df[col])}
+format_dict = {
+    col: "{:,.0f}"
+    for df in numeric_kpi_tables.values()
+    for col in df.columns
+    if pd.api.types.is_numeric_dtype(df[col])
+}
 
 custom_css = """
 <style>
@@ -120,7 +129,7 @@ th, td {
     border: 1px solid #ddd;
     vertical-align: middle;
     word-break: keep-all;
-    white-space: pre-wrap;
+    white-space: pre-wrap;  /* ✅ 표 안에서도 줄바꿈/여러 칸 공백 보존 */
 }
 thead {
     background-color: #f2f2f2;
@@ -130,6 +139,7 @@ thead {
 .blank { display: none !important; }
 </style>
 """
+
 # 화면 구성
 st.markdown(f"### {this_year}년 경영기획본부 주요 추진 목표")
 
@@ -154,7 +164,7 @@ for i in range(0, len(keys), 2):
         df_single = numeric_kpi_tables[kpi_name]
 
         with col:
-            st.markdown(f"<h6>{kpi_counter}. {kpi_name}</h6>", unsafe_allow_html=True)
+            st.markdown(f"<h6>{kpi_counter}. {escape(str(kpi_name))}</h6>", unsafe_allow_html=True)
             kpi_counter += 1
 
             # 해당 KPI의 UID 가져오기
@@ -228,7 +238,6 @@ for i in range(0, len(keys), 2):
 
             st.plotly_chart(fig, use_container_width=True, key=f"plot_{uid}")
 
-
             # 연간 목표 (1~12월 전체 합산 기준)
             df_uid = df_result[df_result["UID"] == uid].copy()
             df_uid["목표"] = pd.to_numeric(df_uid["목표"], errors="coerce").fillna(0)
@@ -236,7 +245,6 @@ for i in range(0, len(keys), 2):
 
             # 단위 가져오기
             unit_text = df_target[df_target["UID"] == uid]["단위"].iloc[0]
-            unit_html = f"<div style='text-align:right; font-size:13px; color:#666; margin-bottom:2px;'>[단위: {unit_text}]</div>"
 
             # KPI 표 출력
             df_display = df_single.drop(columns=["주요 추진 목표"])
@@ -247,15 +255,14 @@ for i in range(0, len(keys), 2):
             st.markdown(
                 f"""
                 <div style='display:flex; justify-content:space-between; font-size:13px; font-weight:500; margin-bottom:2px;'>
-                    <div style='color:#666;'>[연간목표: {int(yearly_goal):,}{unit}]</div>
-                    <div style='color:#666;'>[단위: {unit}]</div>
+                    <div style='color:#666;'>[연간목표: {int(yearly_goal):,}{escape(str(unit_text))}]</div>
+                    <div style='color:#666;'>[단위: {escape(str(unit_text))}]</div>
                 </div>
                 """,
                 unsafe_allow_html=True
             )
             # 표 출력
             st.markdown(f"<div style='overflow-x:auto'>{custom_css + html_code}</div>", unsafe_allow_html=True)
-            
 
 # 정성 KPI 중 목표가 중복되면 열 병합
 def generate_merged_html_table(df):
@@ -263,9 +270,9 @@ def generate_merged_html_table(df):
     header_html = "<tr><th>구분</th>" + "".join(f"<th>{m}</th>" for m in months) + "</tr>"
     html = "<table class='textual'><thead>" + header_html + "</thead><tbody>"
 
-    for idx, row in df.iterrows():
+    for _, row in df.iterrows():
         html += "<tr>"
-        html += f"<td style='text-align:left'>{row['구분']}</td>"
+        html += f"<td style='text-align:left'>{escape(str(row['구분']))}</td>"
 
         if row['구분'] == "목표":
             last_val_key = None
@@ -275,7 +282,8 @@ def generate_merged_html_table(df):
                 raw_val = row.get(m, "")
                 is_empty = pd.isna(raw_val) or raw_val == ""
                 key = None if is_empty else str(raw_val)
-                display_val = "-" if is_empty else str(raw_val)
+                # 표 안에서도 공백/줄바꿈 보존을 위해 escape만 하고 CSS로 pre-wrap
+                display_val = "-" if is_empty else escape(str(raw_val))
 
                 if key is not None and key == last_val_key:
                     span += 1
@@ -286,7 +294,7 @@ def generate_merged_html_table(df):
                         else:
                             html += f"<td style='text-align:left'>{last_display_val}</td>"
                     if key is None:
-                        html += f"<td style='text-align:left'>-</td>"
+                        html += "<td style='text-align:left'>-</td>"
                         last_val_key = None
                         span = 0
                     else:
@@ -303,7 +311,7 @@ def generate_merged_html_table(df):
         else:  # 실적 행은 병합 없이 출력
             for m in months:
                 val = row.get(m, "")
-                val = "-" if pd.isna(val) or val == "" else str(val)
+                val = "-" if pd.isna(val) or val == "" else escape(str(val))
                 html += f"<td style='text-align:left'>{val}</td>"
 
         html += "</tr>"
@@ -311,13 +319,11 @@ def generate_merged_html_table(df):
     html += "</tbody></table>"
     return custom_css + html
 
-
-
 # 정성 KPI 출력
 if not df_textual_fixed.empty:
     for uid in textual_uids["UID"].unique():
         kpi_name = df_target[df_target["UID"] == uid]["추진 목표"].iloc[0]
-        st.markdown(f"<h6>{kpi_counter}. {kpi_name}</h6>", unsafe_allow_html=True)
+        st.markdown(f"<h6>{kpi_counter}. {escape(str(kpi_name))}</h6>", unsafe_allow_html=True)
         kpi_counter += 1
 
         df_kpi = df_textual_fixed[df_textual_fixed["UID"] == uid].copy()
@@ -326,10 +332,8 @@ if not df_textual_fixed.empty:
         merged_html = generate_merged_html_table(df_display)
         st.markdown(f"<div style='overflow-x:auto'>{merged_html}</div>", unsafe_allow_html=True)
 
-
 # 메모 표시
 st.markdown("---")
-
 st.markdown(f"<h4>📝 {current_month}월 메모</h4>", unsafe_allow_html=True)
 
 selected_memo = df_memo[
@@ -338,20 +342,22 @@ selected_memo = df_memo[
     (df_memo["본부"].str.contains("경영기획본부", na=False))
 ]
 
-
-# 메모 출력
+# ✅ 메모 출력: 줄바꿈/여러 칸 띄어쓰기 그대로 보존 (white-space: pre-wrap)
 if not selected_memo.empty:
     for _, row in selected_memo.iterrows():
+        writer = "" if pd.isna(row.get("입력자", "")) else escape(str(row["입력자"]))
+        memo_text = "" if pd.isna(row.get("메모", "")) else escape(str(row["메모"]))
         st.markdown(
-            f"<div style='margin-bottom: 12px; padding: 10px; background-color: #eef5ff; border-left: 5px solid #3a7bd5;'>"
-            f"입력자 : {row['입력자']}<br>"
-            f"<strong>{row['메모']}</strong>"
-            f"</div>",
+            f"""
+            <div style='margin-bottom: 12px; padding: 10px; background-color: #eef5ff; border-left: 5px solid #3a7bd5;'>
+                <div style='margin-bottom:6px; color:#333;'>입력자 : <strong>{writer}</strong></div>
+                <div style='white-space: pre-wrap; font-weight:600;'>{memo_text}</div>
+            </div>
+            """,
             unsafe_allow_html=True
         )
 else:
     st.info("해당 월의 메모가 없습니다.")
-
 
 # Footer 출력
 st.markdown("""

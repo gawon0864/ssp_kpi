@@ -27,7 +27,7 @@ def load_data():
     df_memo = pd.read_csv(memo_path)
     df_target.columns = df_target.columns.str.strip()
     df_result.columns = df_result.columns.str.strip()
-    df_memo.columns = df_memo.columns.str.strip()                       
+    df_memo.columns = df_memo.columns.str.strip()
     return df_target, df_result, df_memo
 
 df_target, df_result, df_memo = load_data()
@@ -55,7 +55,6 @@ for uid in numeric_uids["UID"].unique():
         m_result = m_df["실적"].sum()
         row_목표[f"{m}월"] = m_target
         row_실적[f"{m}월"] = m_result
-        row_차이[f"{m}월"] = m_result - m_target
 
         # 누적값은 현재 월 - 1 까지만 집계, 차이값은 현재 월 - 1 까지만 표시
         if m <= current_month - 1:
@@ -73,6 +72,8 @@ for uid in numeric_uids["UID"].unique():
 
     df_single = pd.DataFrame([row_목표, row_실적, row_차이])
     numeric_kpi_tables[kpi_name] = df_single
+
+# 숫자 포맷 정리
 for df in numeric_kpi_tables.values():
     numeric_cols = df.select_dtypes(include=["float", "int"]).columns
     df[numeric_cols] = df[numeric_cols].round(0).astype("Int64")
@@ -94,7 +95,9 @@ for uid in textual_uids["UID"].unique():
 
 df_textual_fixed = pd.DataFrame(textual_kpi_rows)
 
-# 스타일링 함수
+# ─────────────────────────────────────────────────────────────
+# 표 스타일(CSS)
+# ─────────────────────────────────────────────────────────────
 def highlight_row_if_diff(row):
     if row["구분"] != "목표比":
         return [''] * len(row)
@@ -102,8 +105,14 @@ def highlight_row_if_diff(row):
             'color: red' if isinstance(v, (int, float)) and v < 0 else ''
             for v in row]
 
-format_dict = {col: "{:,.0f}" for df in numeric_kpi_tables.values() for col in df.columns if pd.api.types.is_numeric_dtype(df[col])}
+format_dict = {
+    col: "{:,.0f}"
+    for df in numeric_kpi_tables.values()
+    for col in df.columns
+    if pd.api.types.is_numeric_dtype(df[col])
+}
 
+# 정량용 공통 표 CSS
 custom_css = """
 <style>
 table {
@@ -111,10 +120,10 @@ table {
     border-collapse: collapse;
     font-family: 'Noto Sans KR', sans-serif;
     font-size: 13px;
-    line-height: 1.2;  /* 행 높이 줄임 */
+    line-height: 1.2;
 }
 th, td {
-    padding: 3px 6px;  /* 세로 여백 줄임 */
+    padding: 3px 6px;
     text-align: right;
     border: 1px solid #ddd;
     vertical-align: middle;
@@ -129,6 +138,46 @@ thead {
 .blank { display: none !important; }
 </style>
 """
+
+# ⬇️ 정성 표 전용 CSS (세로 스크롤↑ / 가로 스크롤↓)
+textual_css = """
+<style>
+.textual-wrap {
+    overflow-y: auto;          /* 세로 스크롤 */
+    overflow-x: hidden;        /* 가로 스크롤 제거 */
+    max-height: 80vh;          /* 화면 높이의 80% */
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background: #fff;
+}
+
+table.textual {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 13px;
+    line-height: 1.3;
+}
+
+table.textual th, table.textual td {
+    border: 1px solid #ddd;
+    padding: 6px 8px;
+    vertical-align: top;
+    text-align: left;
+    word-wrap: break-word;
+    white-space: pre-wrap;
+}
+
+table.textual thead th {
+    position: sticky;
+    top: 0;
+    background-color: #f7f7f7;
+    font-weight: bold;
+    z-index: 2;
+}
+</style>
+"""
+
 # 화면 구성
 st.markdown(f"### {this_year}년 글로벌전략본부 주요 추진 목표")
 
@@ -141,7 +190,9 @@ df_result["실적"] = pd.to_numeric(df_result["실적"], errors="coerce").fillna
 # 그래프용 병합 데이터셋 (UID 기준)
 df_plot_base = df_result.merge(df_target[["UID", "추진 목표"]], on="UID")
 
+# ─────────────────────────────────────────────────────────────
 # 정량 KPI 출력
+# ─────────────────────────────────────────────────────────────
 keys = list(numeric_kpi_tables.keys())
 for i in range(0, len(keys), 2):
     col1, col2 = st.columns(2)
@@ -171,42 +222,26 @@ for i in range(0, len(keys), 2):
 
             # 혼합형 그래프 생성
             fig = go.Figure()
-
-            # 월별 막대: 목표
             fig.add_trace(go.Bar(
-                x=df_plot["월"],
-                y=df_plot["목표"],
-                name="월별 목표",
+                x=df_plot["월"], y=df_plot["목표"], name="월별 목표",
                 marker_color="#333f50",
                 hovertemplate=f'%{{y:,.0f}}{unit}, 월별 목표<extra></extra>'
             ))
-
-            # 월별 막대: 실적
             fig.add_trace(go.Bar(
-                x=df_plot["월"],
-                y=df_plot["실적"],
-                name="월별 실적",
+                x=df_plot["월"], y=df_plot["실적"], name="월별 실적",
                 marker_color="#8497b0",
                 hovertemplate=f'%{{y:,.0f}}{unit}, 월별 실적<extra></extra>'
             ))
-
-            # 선: 누적 목표
             fig.add_trace(go.Scatter(
-                x=df_plot["월"],
-                y=df_plot["누적 목표"],
-                name="누적 목표",
+                x=df_plot["월"], y=df_plot["누적 목표"], name="누적 목표",
                 mode="lines+markers",
                 line=dict(color="#ff7f0e", width=2.5),
                 marker=dict(color="#ffffff", line=dict(color="#ff7f0e", width=1.5), size=6),
                 yaxis="y2",
                 hovertemplate=f'%{{y:,.0f}}{unit}, 누적 목표<extra></extra>'
             ))
-
-            # 선: 누적 실적
             fig.add_trace(go.Scatter(
-                x=df_plot["월"],
-                y=df_plot["누적 실적"],
-                name="누적 실적",
+                x=df_plot["월"], y=df_plot["누적 실적"], name="누적 실적",
                 mode="lines+markers",
                 line=dict(color="#e31a1c", width=2.5),
                 marker=dict(color="#ffffff", line=dict(color="#e31a1c", width=1.5), size=6),
@@ -214,7 +249,6 @@ for i in range(0, len(keys), 2):
                 hovertemplate=f'%{{y:,.0f}}{unit}, 누적 실적<extra></extra>'
             ))
 
-            # 레이아웃 설정
             fig.update_layout(
                 barmode='group',
                 yaxis2=dict(overlaying='y', side='right', showgrid=False),
@@ -227,94 +261,98 @@ for i in range(0, len(keys), 2):
 
             st.plotly_chart(fig, use_container_width=True, key=f"plot_{uid}")
 
-
             # 연간 목표 (1~12월 전체 합산 기준)
             df_uid = df_result[df_result["UID"] == uid].copy()
             df_uid["목표"] = pd.to_numeric(df_uid["목표"], errors="coerce").fillna(0)
             yearly_goal = df_uid[df_uid["월"].between(1, 12)]["목표"].sum()
 
-            # 단위 가져오기
+            # 단위 텍스트
             unit_text = df_target[df_target["UID"] == uid]["단위"].iloc[0]
-            unit_html = f"<div style='text-align:right; font-size:13px; color:#666; margin-bottom:2px;'>[단위: {unit_text}]</div>"
 
-            # KPI 표 출력
+            # KPI 표 출력 (정량)
             df_display = df_single.drop(columns=["주요 추진 목표"])
             styled = df_display.style.apply(highlight_row_if_diff, axis=1).format(format_dict, na_rep="-")
             html_code = styled.to_html(index=False)
 
-            # 왼쪽은 연간목표, 오른쪽은 단위 표시 (한 줄에)
             st.markdown(
                 f"""
                 <div style='display:flex; justify-content:space-between; font-size:13px; font-weight:500; margin-bottom:2px;'>
-                    <div style='color:#666;'>[연간목표: {int(yearly_goal):,}{unit}]</div>
-                    <div style='color:#666;'>[단위: {unit}]</div>
+                    <div style='color:#666;'>[연간목표: {int(yearly_goal):,}{unit_text}]</div>
+                    <div style='color:#666;'>[단위: {unit_text}]</div>
                 </div>
                 """,
                 unsafe_allow_html=True
             )
-            # 표 출력
             st.markdown(f"<div style='overflow-x:auto'>{custom_css + html_code}</div>", unsafe_allow_html=True)
 
-            
-
-# 정성 KPI 중 목표가 중복되면 열 병합
-def generate_merged_html_table(df):
+# ─────────────────────────────────────────────────────────────
+# 정성 KPI: 세로 테이블 + '목표' 세로 병합(rowspan)
+# ─────────────────────────────────────────────────────────────
+def generate_vertical_html_table(df):
+    # df: 열에 '구분', '1월'..'12월', 행은 '목표'와 '실적'
     months = [f"{m}월" for m in range(1, 13)]
-    header_html = "<tr><th>구분</th>" + "".join(f"<th>{m}</th>" for m in months) + "</tr>"
-    html = "<table class='textual'><thead>" + header_html + "</thead><tbody>"
 
-    for idx, row in df.iterrows():
-        html += "<tr>"
-        html += f"<td style='text-align:left'>{row['구분']}</td>"
+    def get_val(kind, m):
+        if m not in df.columns:
+            return "-"
+        s = df[df["구분"] == kind][m]
+        if s.empty:
+            return "-"
+        v = s.values[0]
+        return "-" if (pd.isna(v) or v == "") else str(v)
 
-        if row['구분'] == "목표":
-            last_val_key = None
-            span = 0
+    # 월별 목표/실적 리스트
+    rows = []
+    for m in months:
+        rows.append({
+            "month": m,
+            "target": get_val("목표", m),
+            "result": get_val("실적", m),
+        })
 
-            for m in months:
-                raw_val = row.get(m, "")
-                is_empty = pd.isna(raw_val) or raw_val == ""
-                key = None if is_empty else str(raw_val)
-                display_val = "-" if is_empty else str(raw_val)
+    # 동일 목표 연속 구간(rowspan 대상) 계산
+    groups = []
+    i = 0
+    while i < len(rows):
+        j = i + 1
+        while j < len(rows) and rows[j]["target"] == rows[i]["target"] and rows[i]["target"] != "-":
+            j += 1
+        groups.append((i, j - 1))  # [i..j-1]가 동일 목표
+        i = j
 
-                if key is not None and key == last_val_key:
-                    span += 1
+    # HTML 출력
+    html = []
+    html.append("<table class='textual'>")
+    html.append("<thead><tr><th>월</th><th>목표</th><th>실적</th></tr></thead>")
+    html.append("<tbody>")
+
+    for start, end in groups:
+        rowspan = end - start + 1
+        for idx in range(start, end + 1):
+            m = rows[idx]["month"]
+            t = rows[idx]["target"]
+            r = rows[idx]["result"]
+
+            if idx == start:
+                if t == "-" or rowspan == 1:
+                    # 병합 불필요/불가
+                    html.append(f"<tr><td>{m}</td><td>{t}</td><td>{r}</td></tr>")
                 else:
-                    if last_val_key is not None:
-                        if span > 1:
-                            html += f"<td colspan='{span}' style='text-align:left'>{last_display_val}</td>"
-                        else:
-                            html += f"<td style='text-align:left'>{last_display_val}</td>"
-                    if key is None:
-                        html += f"<td style='text-align:left'>-</td>"
-                        last_val_key = None
-                        span = 0
-                    else:
-                        last_val_key = key
-                        last_display_val = display_val
-                        span = 1
+                    # 첫 행에만 목표 셀 rowspan 적용
+                    html.append(f"<tr><td>{m}</td><td rowspan='{rowspan}'>{t}</td><td>{r}</td></tr>")
+            else:
+                # 이어지는 행: 목표 셀 생략(위 rowspan에 포함)
+                html.append(f"<tr><td>{m}</td><td>{r}</td></tr>")
 
-            if last_val_key is not None and span > 0:
-                if span > 1:
-                    html += f"<td colspan='{span}' style='text-align:left'>{last_display_val}</td>"
-                else:
-                    html += f"<td style='text-align:left'>{last_display_val}</td>"
+    html.append("</tbody></table>")
+    return "".join(html)
 
-        else:  # 실적 행은 병합 없이 출력
-            for m in months:
-                val = row.get(m, "")
-                val = "-" if pd.isna(val) or val == "" else str(val)
-                html += f"<td style='text-align:left'>{val}</td>"
-
-        html += "</tr>"
-
-    html += "</tbody></table>"
-    return custom_css + html
-
-
-
-# 정성 KPI 출력
+# ─────────────────────────────────────────────────────────────
+# 정성 KPI 출력 (세로 스크롤↑ / 가로 스크롤↓)
+# ─────────────────────────────────────────────────────────────
 if not df_textual_fixed.empty:
+    st.markdown(textual_css, unsafe_allow_html=True)
+
     for uid in textual_uids["UID"].unique():
         kpi_name = df_target[df_target["UID"] == uid]["추진 목표"].iloc[0]
         st.markdown(f"<h6>{kpi_counter}. {kpi_name}</h6>", unsafe_allow_html=True)
@@ -323,14 +361,11 @@ if not df_textual_fixed.empty:
         df_kpi = df_textual_fixed[df_textual_fixed["UID"] == uid].copy()
         df_display = df_kpi.drop(columns=["UID", "주요 추진 목표"])
 
-        merged_html = generate_merged_html_table(df_display)
-        st.markdown(f"<div style='overflow-x:auto'>{merged_html}</div>", unsafe_allow_html=True)
-
-
+        vertical_html = generate_vertical_html_table(df_display)
+        st.markdown(f"<div class='textual-wrap'>{vertical_html}</div>", unsafe_allow_html=True)
 
 # 메모 표시
 st.markdown("---")
-
 st.markdown(f"<h4>📝 {current_month}월 메모</h4>", unsafe_allow_html=True)
 
 selected_memo = df_memo[
@@ -338,7 +373,6 @@ selected_memo = df_memo[
     (df_memo["월"] == current_month) &
     (df_memo["본부"].str.contains("글로벌전략본부", na=False))
 ]
-
 
 # 메모 출력
 if not selected_memo.empty:
@@ -352,7 +386,6 @@ if not selected_memo.empty:
         )
 else:
     st.info("해당 월의 메모가 없습니다.")
-
 
 # Footer 출력
 st.markdown("""
@@ -368,7 +401,6 @@ st.markdown("""
     z-index: 100;
 }
 </style>
-
 <div class="footer">
   ⓒ 2025 SeAH Special Steel Corp. All rights reserved.
 </div>
