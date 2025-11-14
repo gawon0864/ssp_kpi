@@ -156,7 +156,8 @@ table.textual {
     font-family: 'Noto Sans KR', sans-serif;
     font-size: 13px;
     line-height: 1.4;
-    width: max-content;              /* 내용 기준 폭, 바깥 div에서 가로 스크롤 */
+    table-layout: fixed;        /* ✅ 열 폭을 내용과 무관하게 고정 */
+    width: max-content;         /* 전체는 내용 만큼, 밖에서 가로 스크롤 */
 }
 table.textual thead {
     background-color: #f2f2f2;
@@ -168,13 +169,17 @@ table.textual td {
     text-align: left;
     border: 1px solid #ddd;
     vertical-align: top;
-    white-space: pre-wrap;
-    word-break: keep-all;
-    min-width: 120px;                /* 전체 최소폭을 120px로 축소 */
+    white-space: pre-wrap;      /* 줄바꿈 유지 */
+    word-break: break-word;     /* 너무 긴 단어도 강제로 줄바꿈 */
+    width: 260px;               /* 👉 월 열 폭 고정값 (대충 실적 텍스트박스 느낌) */
+    min-width: 260px;
+    max-width: 260px;
 }
 table.textual th:first-child,
 table.textual td:first-child {
-    min-width: 70px;                 /* 구분 칸은 슬림하게 */
+    width: 80px;
+    min-width: 80px;
+    max-width: 80px;
 }
 </style>
 """
