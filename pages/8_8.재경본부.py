@@ -158,12 +158,10 @@ table.textual {
     line-height: 1.4;
     width: max-content;              
 }
-
 table.textual thead {
     background-color: #f2f2f2;
     font-weight: bold;
 }
-
 table.textual th,
 table.textual td {
     padding: 6px 10px;
