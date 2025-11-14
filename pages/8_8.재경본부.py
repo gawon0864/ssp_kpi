@@ -156,7 +156,7 @@ table.textual {
     font-family: 'Noto Sans KR', sans-serif;
     font-size: 13px;
     line-height: 1.4;
-    width: max-content;              /* 내용 기준 폭, 바깥 div에서 가로 스크롤 */
+    width: max-content;              
 }
 
 table.textual thead {
@@ -169,10 +169,10 @@ table.textual td {
     padding: 6px 10px;
     text-align: left;
     border: 1px solid #ddd;
-    vertical-align: top;             /* 여러 줄일 때 위쪽부터 정렬 */
+    vertical-align: top;             
     white-space: pre-wrap;
     word-break: keep-all;
-    min-width: 160px;                /* 각 월 칸 최소 폭 */
+    min-width: 160px;                
 }
 </style>
 """
@@ -303,7 +303,23 @@ for i in range(0, len(keys), 2):
             # 표 출력
             st.markdown(f"<div style='overflow-x:auto'>{custom_css + html_code}</div>", unsafe_allow_html=True)
 
-            
+# 정성 KPI 중 셀 텍스트용 포멧       
+def format_text_cell(val):
+    """정성 KPI 셀 텍스트용 포맷: 빈값 -> '-', 줄바꿈 -> <br>, HTML 이스케이프"""
+    if pd.isna(val) or val == "":
+        return "-"
+    s = str(val)
+    s = escape(s)  # <, &, " 등 이스케이프
+    # 실제 줄바꿈 + 문자열 형태의 \n 모두 대응
+    s = (
+        s.replace("\\r\\n", "<br>")
+         .replace("\\n", "<br>")
+         .replace("\r\n", "<br>")
+         .replace("\r", "<br>")
+         .replace("\n", "<br>")
+    )
+    return s
+     
 
 # 정성 KPI 중 목표가 중복되면 열 병합
 def generate_merged_html_table(df):
@@ -322,8 +338,8 @@ def generate_merged_html_table(df):
             for m in months:
                 raw_val = row.get(m, "")
                 is_empty = pd.isna(raw_val) or raw_val == ""
-                key = None if is_empty else str(raw_val)
-                display_val = "-" if is_empty else str(raw_val)
+                key = None if is_empty else str(raw_val)          # 병합 판단용 키는 원본 문자열
+                display_val = format_text_cell(raw_val)           # 화면 표시용 텍스트
 
                 if key is not None and key == last_val_key:
                     span += 1
@@ -350,10 +366,9 @@ def generate_merged_html_table(df):
 
         else:  # 실적 행은 병합 없이 출력
             for m in months:
-                val = row.get(m, "")
-                val = "-" if pd.isna(val) or val == "" else str(val)
-                html += f"<td style='text-align:left'>{val}</td>"
-
+                raw_val = row.get(m, "")
+                cell_html = format_text_cell(raw_val)
+                html += f"<td style='text-align:left'>{cell_html}</td>"
         html += "</tr>"
 
     html += "</tbody></table>"
