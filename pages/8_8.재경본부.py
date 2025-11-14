@@ -156,7 +156,7 @@ table.textual {
     font-family: 'Noto Sans KR', sans-serif;
     font-size: 13px;
     line-height: 1.4;
-    width: max-content;              
+    width: max-content;              /* 내용 기준 폭, 바깥 div에서 가로 스크롤 */
 }
 table.textual thead {
     background-color: #f2f2f2;
@@ -167,10 +167,14 @@ table.textual td {
     padding: 6px 10px;
     text-align: left;
     border: 1px solid #ddd;
-    vertical-align: top;             
+    vertical-align: top;
     white-space: pre-wrap;
     word-break: keep-all;
-    min-width: 160px;                
+    min-width: 120px;                /* 🔽 전체 최소폭을 120px로 축소 */
+}
+table.textual th:first-child,
+table.textual td:first-child {
+    min-width: 70px;                 /* 🔽 구분 칸은 슬림하게 */
 }
 </style>
 """
