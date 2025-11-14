@@ -150,14 +150,11 @@ table.textual {
     font-size: 13px;
     line-height: 1.4;
     table-layout: fixed;           /* 열 폭 고정 */
-    width: max-content;            /* 전체는 내용만큼, 가로 스크롤 */
 }
 table.textual thead {
     background-color: #f2f2f2;
     font-weight: bold;
 }
-
-/* 공통 셀 스타일 (폭 제외) */
 table.textual th,
 table.textual td {
     padding: 6px 10px;
@@ -167,24 +164,18 @@ table.textual td {
     white-space: pre-wrap;
     word-break: break-word;
 }
-
-/* 내용이 있는 월 컬럼: 넓게 */
 table.textual th.month-full,
 table.textual td.month-full {
     width: 300px;
     min-width: 300px;
     max-width: 300px;
 }
-
-/* 목표/실적 모두 비어 있는 월 컬럼: 얇게 */
 table.textual th.month-empty,
 table.textual td.month-empty {
     width: 80px;
     min-width: 80px;
     max-width: 80px;
 }
-
-/* 첫 번째 열(구분)은 별도 폭 */
 table.textual th:first-child,
 table.textual td:first-child {
     width: 90px;
