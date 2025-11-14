@@ -148,6 +148,36 @@ thead {
 </style>
 """
 
+
+# 🔽 정성 KPI 전용 CSS
+textual_css = """
+<style>
+table.textual {
+    border-collapse: collapse;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 13px;
+    line-height: 1.4;
+    width: max-content;              /* 👉 내용 기준으로 폭 잡고, 밖에서 가로 스크롤 */
+}
+
+table.textual thead {
+    background-color: #f2f2f2;
+    font-weight: bold;
+}
+
+table.textual th,
+table.textual td {
+    padding: 6px 10px;               /* 여유 있게 */
+    text-align: left;                /* 텍스트 좌측 정렬 */
+    border: 1px solid #ddd;
+    vertical-align: top;             /* 여러 줄일 때 위부터 시작 */
+    white-space: pre-wrap;
+    word-break: keep-all;
+    min-width: 160px;                /* 🔥 각 월칸 최소 폭: 가독성 핵심 포인트 */
+}
+</style>
+"""
+
 # 화면 구성
 st.markdown(f"### {this_year}년 재경본부 주요 추진 목표")
 
@@ -328,7 +358,7 @@ def generate_merged_html_table(df):
         html += "</tr>"
 
     html += "</tbody></table>"
-    return custom_css + html
+    return textual_css + html
 
 
 
