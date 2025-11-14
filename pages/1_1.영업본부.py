@@ -52,6 +52,7 @@ for uid in numeric_uids["UID"].unique():
     total_목표 = total_실적 = 0
 
     for m in months:
+        #여기서부터 변경함. 왜냐면 11월, 12월 전망도 입력했거든. 
         m_df = df_uid[df_uid["월"] == m]
         m_target = m_df["목표"].sum()
         m_result = m_df["실적"].sum()
@@ -92,6 +93,7 @@ for uid in numeric_uids["UID"].unique():
     numeric_kpi_tables[kpi_name] = df_single
 
 for df in numeric_kpi_tables.values():
+
     numeric_cols = df.select_dtypes(include=["float", "int"]).columns
     df[numeric_cols] = df[numeric_cols].round(0).astype("Int64")
 

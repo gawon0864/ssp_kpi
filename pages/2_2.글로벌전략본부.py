@@ -51,19 +51,36 @@ for uid in numeric_uids["UID"].unique():
     total_목표 = total_실적 = 0
 
     for m in months:
+        #여기서부터 변경함. 왜냐면 11월, 12월 전망도 입력했거든. 
         m_df = df_uid[df_uid["월"] == m]
         m_target = m_df["목표"].sum()
         m_result = m_df["실적"].sum()
+        
         row_목표[f"{m}월"] = m_target
         row_실적[f"{m}월"] = m_result
+        row_차이[f"{m}월"] = m_result - m_target
+
+        # ✔ 현재월 제한 없이 12월까지 누적 계산
+        total_목표 += m_target
+        total_실적 += m_result
+
+
+    #for m in months:
+    #    m_df = df_uid[df_uid["월"] == m]
+    #    m_target = m_df["목표"].sum()
+    #    m_result = m_df["실적"].sum()
+    #    row_목표[f"{m}월"] = m_target
+    #    row_실적[f"{m}월"] = m_result
+
+    #    row_차이[f"{m}월"] = m_result - m_target
 
         # 누적값은 현재 월 - 1 까지만 집계, 차이값은 현재 월 - 1 까지만 표시
-        if m <= current_month - 1:
-            total_목표 += m_target
-            total_실적 += m_result
-            row_차이[f"{m}월"] = m_result - m_target
-        else:
-            row_차이[f"{m}월"] = None
+        #if m <= current_month - 1:
+        #    total_목표 += m_target
+        #    total_실적 += m_result
+        #    row_차이[f"{m}월"] = m_result - m_target
+        #else:
+        #    row_차이[f"{m}월"] = None
 
     row_목표["누적"] = total_목표
     row_실적["누적"] = total_실적
