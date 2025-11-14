@@ -177,9 +177,9 @@ table.textual td {
 }
 table.textual th:first-child,
 table.textual td:first-child {
-    width: 80px;
-    min-width: 80px;
-    max-width: 80px;
+    width: 50px;
+    min-width: 50px;
+    max-width: 50px;
 }
 </style>
 """
