@@ -171,8 +171,8 @@ table.textual td {
     vertical-align: top;
     white-space: pre-wrap;      /* 줄바꿈 유지 */
     word-break: break-word;     /* 너무 긴 단어도 강제로 줄바꿈 */
-    width: 260px;               /* 👉 월 열 폭 고정값 (대충 실적 텍스트박스 느낌) */
-    min-width: 260px;
+    width: 300px;               /* 👉 월 열 폭 고정값 (대충 실적 텍스트박스 느낌) */
+    min-width: 10px;
     max-width: 260px;
 }
 table.textual th:first-child,
