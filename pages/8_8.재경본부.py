@@ -129,10 +129,10 @@ table {
     border-collapse: collapse;
     font-family: 'Noto Sans KR', sans-serif;
     font-size: 13px;
-    line-height: 1.2;  /* 행 높이 줄임 */
+    line-height: 1.2;
 }
 th, td {
-    padding: 3px 6px;  /* 세로 여백 줄임 */
+    padding: 3px 6px;
     text-align: right;
     border: 1px solid #ddd;
     vertical-align: middle;
@@ -148,8 +148,7 @@ thead {
 </style>
 """
 
-
-# 🔽 정성 KPI 전용 CSS
+# 🔽 정성 KPI 전용 CSS (이거 그대로!)
 textual_css = """
 <style>
 table.textual {
@@ -157,7 +156,7 @@ table.textual {
     font-family: 'Noto Sans KR', sans-serif;
     font-size: 13px;
     line-height: 1.4;
-    width: max-content;              /* 👉 내용 기준으로 폭 잡고, 밖에서 가로 스크롤 */
+    width: max-content;              /* 내용 기준 폭, 바깥 div에서 가로 스크롤 */
 }
 
 table.textual thead {
@@ -167,13 +166,13 @@ table.textual thead {
 
 table.textual th,
 table.textual td {
-    padding: 6px 10px;               /* 여유 있게 */
-    text-align: left;                /* 텍스트 좌측 정렬 */
+    padding: 6px 10px;
+    text-align: left;
     border: 1px solid #ddd;
-    vertical-align: top;             /* 여러 줄일 때 위부터 시작 */
+    vertical-align: top;             /* 여러 줄일 때 위쪽부터 정렬 */
     white-space: pre-wrap;
     word-break: keep-all;
-    min-width: 160px;                /* 🔥 각 월칸 최소 폭: 가독성 핵심 포인트 */
+    min-width: 160px;                /* 각 월 칸 최소 폭 */
 }
 </style>
 """
