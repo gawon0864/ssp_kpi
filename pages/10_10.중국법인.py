@@ -9,7 +9,7 @@ warnings.filterwarnings('ignore')
 
 st.set_page_config(layout="wide", initial_sidebar_state="collapsed")
 
-require_login()  # 로그인 되어 있지 않으면 여기서 차단됨
+# require_login()  # 로그인 되어 있지 않으면 여기서 차단됨
 
 # 현재 연도 및 월 정보
 this_year = datetime.today().year
@@ -32,6 +32,8 @@ def load_data():
     return df_target, df_result, df_memo
 
 df_target, df_result, df_memo= load_data()
+df_result = df_result[df_result["년도"] == this_year]
+df_target = df_target[df_target["년도"] == this_year]
 
 # 정량/정성 UID 구분
 numeric_uids = df_target[df_target["지표 유형"] == "정량"]

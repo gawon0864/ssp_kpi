@@ -5,7 +5,6 @@ from datetime import datetime
 from auth import require_login
 import warnings
 from html import escape  # 메모 안전 이스케이프 및 공백/줄바꿈 보존용
-
 warnings.filterwarnings('ignore')
 
 st.set_page_config(layout="wide", initial_sidebar_state="collapsed")
@@ -15,17 +14,17 @@ require_login()  # 로그인 되어 있지 않으면 여기서 차단됨
 # 현재 연도 및 월 정보
 this_year = datetime.today().year
 current_month = datetime.today().month
-months = list(range(1, 12 + 1))
+months = list(range(1, 13))
 
 # CSV 파일 불러오기
-mp_target_path = st.secrets["google_sheets"]["mp_target_url"]
-mp_result_path = st.secrets["google_sheets"]["mp_result_url"]
+fa_target_path = st.secrets["google_sheets"]["fa_target_url"]
+fa_result_path = st.secrets["google_sheets"]["fa_result_url"]
 memo_path = st.secrets["google_sheets"]["memo_url"]
 
 @st.cache_data(ttl=1800)
 def load_data():
-    df_target = pd.read_csv(mp_target_path)
-    df_result = pd.read_csv(mp_result_path)
+    df_target = pd.read_csv(fa_target_path)
+    df_result = pd.read_csv(fa_result_path)
     df_memo = pd.read_csv(memo_path)
     df_target.columns = df_target.columns.str.strip()
     df_result.columns = df_result.columns.str.strip()
@@ -33,6 +32,8 @@ def load_data():
     return df_target, df_result, df_memo
 
 df_target, df_result, df_memo = load_data()
+df_result = df_result[df_result["년도"] == this_year]
+df_target = df_target[df_target["년도"] == this_year]
 
 # 정량/정성 UID 구분
 numeric_uids = df_target[df_target["지표 유형"] == "정량"]
@@ -188,7 +189,7 @@ table.textual td:first-child {
 # =========================
 # 화면 구성 시작
 # =========================
-st.markdown(f"### {this_year}년 경영기획본부 주요 추진 목표")
+st.markdown(f"### {this_year}년 경영관리본부 주요 추진 목표")
 
 kpi_counter = 1  # 공통 번호 시작
 
@@ -435,7 +436,7 @@ st.markdown(f"<h4>📝 {current_month}월 메모</h4>", unsafe_allow_html=True)
 selected_memo = df_memo[
     (df_memo["년도"] == this_year) &
     (df_memo["월"] == current_month) &
-    (df_memo["본부"].str.contains("재경본부", na=False))
+    (df_memo["본부"].str.contains("경영관리본부", na=False))
 ]
 
 if not selected_memo.empty:

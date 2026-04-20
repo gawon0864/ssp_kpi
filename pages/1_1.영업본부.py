@@ -9,7 +9,7 @@ warnings.filterwarnings('ignore')
 
 st.set_page_config(layout="wide", initial_sidebar_state="collapsed")
 
-require_login()  # 로그인 되어 있지 않으면 여기서 차단됨
+# require_login()  # 로그인 되어 있지 않으면 여기서 차단됨
 
 # 현재 연도 및 월 정보
 this_year = datetime.today().year
@@ -32,6 +32,20 @@ def load_data():
     return df_target, df_result, df_memo
 
 df_target, df_result, df_memo = load_data()
+df_result = df_result[df_result["년도"] == this_year]
+df_target = df_target[df_target["년도"] == this_year]
+
+# 상/중/하 스택 그룹: 전체 UID → 서브 UID 매핑
+STACKED_GROUPS = {
+    'SA2604': {
+        'sub_uids': ['SA2601', 'SA2602', 'SA2603'],
+        'labels': ['상', '중', '하'],
+    }
+}
+stacked_sub_uids = {uid for g in STACKED_GROUPS.values() for uid in g['sub_uids']}
+
+# 실적=bar, 목표=line, 누적 없음으로 표시할 UID
+BAR_LINE_UIDS = {'SA2609'}
 
 # 정량/정성 UID 구분
 numeric_uids = df_target[df_target["지표 유형"] == "정량"]
@@ -41,55 +55,69 @@ numeric_kpi_tables = {}
 
 
 for uid in numeric_uids["UID"].unique():
+    if uid in stacked_sub_uids:
+        continue  # 상/중/하 개별 UID는 전체(SA2604)로 통합 표시
     kpi_name = df_target[df_target["UID"] == uid]["추진 목표"].iloc[0]
-    df_uid = df_result[df_result["UID"] == uid].copy()
-    df_uid["목표"] = pd.to_numeric(df_uid["목표"], errors="coerce").fillna(0)
-    df_uid["실적"] = pd.to_numeric(df_uid["실적"], errors="coerce").fillna(0)
 
-    row_목표 = {"주요 추진 목표": kpi_name, "구분": "목표"}
-    row_실적 = {"구분": "실적"}
-    row_차이 = {"구분": "목표比"}
-    total_목표 = total_실적 = 0
+    if uid in STACKED_GROUPS:
+        # 12행 표: 목표/실적/목표比 × (전체/상/중/하)
+        group = STACKED_GROUPS[uid]
+        sub_uids_list = group['sub_uids']
+        labels_list = group['labels']
+        uid_label_pairs = [(uid, '전체')] + list(zip(sub_uids_list, labels_list))
+        rows_목표, rows_실적, rows_차이 = [], [], []
+        for row_uid, row_label in uid_label_pairs:
+            df_uid = df_result[df_result["UID"] == row_uid].copy()
+            df_uid["목표"] = pd.to_numeric(df_uid["목표"], errors="coerce").fillna(0)
+            df_uid["실적"] = pd.to_numeric(df_uid["실적"], errors="coerce").fillna(0)
+            row_t = {"주요 추진 목표": kpi_name if row_label == '전체' else "", "구분": f"목표({row_label})"}
+            row_r = {"주요 추진 목표": "", "구분": f"실적({row_label})"}
+            row_d = {"주요 추진 목표": "", "구분": f"목표比({row_label})"}
+            total_t = total_r = 0
+            for m in months:
+                m_df = df_uid[df_uid["월"] == m]
+                m_target = m_df["목표"].sum()
+                m_result = m_df["실적"].sum()
+                row_t[f"{m}월"] = m_target
+                row_r[f"{m}월"] = m_result
+                row_d[f"{m}월"] = m_result - m_target
+                total_t += m_target
+                total_r += m_result
+            row_t["누적"] = total_t
+            row_r["누적"] = total_r
+            row_d["누적"] = total_r - total_t
+            rows_목표.append(row_t)
+            rows_실적.append(row_r)
+            rows_차이.append(row_d)
+        df_single = pd.DataFrame(rows_목표 + rows_실적 + rows_차이)
 
-    for m in months:
-        #여기서부터 변경함. 왜냐면 11월, 12월 전망도 입력했거든. 
-        m_df = df_uid[df_uid["월"] == m]
-        m_target = m_df["목표"].sum()
-        m_result = m_df["실적"].sum()
-        
-        row_목표[f"{m}월"] = m_target
-        row_실적[f"{m}월"] = m_result
-        row_차이[f"{m}월"] = m_result - m_target
+    else:
+        df_uid = df_result[df_result["UID"] == uid].copy()
+        df_uid["목표"] = pd.to_numeric(df_uid["목표"], errors="coerce").fillna(0)
+        df_uid["실적"] = pd.to_numeric(df_uid["실적"], errors="coerce").fillna(0)
 
-        # ✔ 현재월 제한 없이 12월까지 누적 계산
-        total_목표 += m_target
-        total_실적 += m_result
+        row_목표 = {"주요 추진 목표": kpi_name, "구분": "목표"}
+        row_실적 = {"구분": "실적"}
+        row_차이 = {"구분": "목표比"}
+        total_목표 = total_실적 = 0
 
+        for m in months:
+            m_df = df_uid[df_uid["월"] == m]
+            m_target = m_df["목표"].sum()
+            m_result = m_df["실적"].sum()
+            row_목표[f"{m}월"] = m_target
+            row_실적[f"{m}월"] = m_result
+            row_차이[f"{m}월"] = m_result - m_target
+            total_목표 += m_target
+            total_실적 += m_result
 
-    #for m in months:
-    #    m_df = df_uid[df_uid["월"] == m]
-    #    m_target = m_df["목표"].sum()
-    #    m_result = m_df["실적"].sum()
-    #    row_목표[f"{m}월"] = m_target
-    #    row_실적[f"{m}월"] = m_result
+        row_목표["누적"] = total_목표
+        row_실적["누적"] = total_실적
+        row_차이["누적"] = total_실적 - total_목표
+        row_실적["주요 추진 목표"] = ""
+        row_차이["주요 추진 목표"] = ""
+        df_single = pd.DataFrame([row_목표, row_실적, row_차이])
 
-    #    row_차이[f"{m}월"] = m_result - m_target
-
-        # 누적값은 현재 월 - 1 까지만 집계, 차이값은 현재 월 - 1 까지만 표시
-        #if m <= current_month - 1:
-        #    total_목표 += m_target
-        #    total_실적 += m_result
-        #    row_차이[f"{m}월"] = m_result - m_target
-        #else:
-        #    row_차이[f"{m}월"] = None
-
-    row_목표["누적"] = total_목표
-    row_실적["누적"] = total_실적
-    row_차이["누적"] = total_실적 - total_목표
-    row_실적["주요 추진 목표"] = ""
-    row_차이["주요 추진 목표"] = ""
-
-    df_single = pd.DataFrame([row_목표, row_실적, row_차이])
     numeric_kpi_tables[kpi_name] = df_single
 
 for df in numeric_kpi_tables.values():
@@ -116,7 +144,7 @@ df_textual_fixed = pd.DataFrame(textual_kpi_rows)
 
 # 스타일링 함수
 def highlight_row_if_diff(row):
-    if row["구분"] != "목표比":
+    if not str(row["구분"]).startswith("목표比"):
         return [''] * len(row)
     return ['color: blue' if isinstance(v, (int, float)) and v > 0 else
             'color: red' if isinstance(v, (int, float)) and v < 0 else ''
@@ -179,72 +207,163 @@ for i in range(0, len(keys), 2):
 
             # 해당 KPI의 UID 가져오기
             uid = df_target[df_target["추진 목표"] == kpi_name]["UID"].iloc[0]
-            df_plot = df_plot_base[df_plot_base["UID"] == uid]
-
-            # 월별 집계 및 누적 계산
-            df_plot = df_plot.groupby("월")[["목표", "실적"]].sum().reset_index()
-            df_plot = df_plot[df_plot["월"].between(1, 12)]
-
-            df_plot["누적 목표"] = df_plot["목표"].cumsum()
-            df_plot["누적 실적"] = df_plot["실적"].cumsum()
-
             unit = df_target[df_target["UID"] == uid]["단위"].iloc[0]
 
-            # 혼합형 그래프 생성
-            fig = go.Figure()
+            if uid in STACKED_GROUPS:
+                # 상/중/하 스택 막대 + 전체 누적 선
+                group = STACKED_GROUPS[uid]
+                sub_uids = group['sub_uids']
+                labels = group['labels']
+                # 하→중→상 순으로 추가해야 상이 맨 위에 쌓임
+                target_colors = ['#5dade2', '#1a6b9a', '#0d1b2a']   # 하→중→상 연→중→진 블루
+                result_colors = ['#f1948a', '#e74c3c', '#7b241c']   # 하→중→상 연→중→진 레드
 
-            # 월별 막대: 목표
-            fig.add_trace(go.Bar(
-                x=df_plot["월"],
-                y=df_plot["목표"],
-                name="월별 목표",
-                marker_color="#333f50",
-                hovertemplate=f'%{{y:,.0f}}{unit}, 월별 목표<extra></extra>'
-            ))
+                fig = go.Figure()
 
-            # 월별 막대: 실적
-            fig.add_trace(go.Bar(
-                x=df_plot["월"],
-                y=df_plot["실적"],
-                name="월별 실적",
-                marker_color="#8497b0",
-                hovertemplate=f'%{{y:,.0f}}{unit}, 월별 실적<extra></extra>'
-            ))
+                for k, (sub_uid, label) in enumerate(zip(reversed(sub_uids), reversed(labels))):
+                    df_sub = df_plot_base[df_plot_base["UID"] == sub_uid]
+                    df_sub = df_sub.groupby("월")[["목표", "실적"]].sum().reset_index()
+                    df_sub = df_sub[df_sub["월"].between(1, 12)]
+                    fig.add_trace(go.Bar(
+                        x=df_sub["월"],
+                        y=df_sub["목표"],
+                        name=f"목표({label})",
+                        marker_color=target_colors[k],
+                        offsetgroup=0,
+                        hovertemplate=f'%{{y:,.0f}}{unit}, 목표({label})<extra></extra>'
+                    ))
 
-            # 선: 누적 목표
-            fig.add_trace(go.Scatter(
-                x=df_plot["월"],
-                y=df_plot["누적 목표"],
-                name="누적 목표",
-                mode="lines+markers",
-                line=dict(color="#ff7f0e", width=2.5),
-                marker=dict(color="#ffffff", line=dict(color="#ff7f0e", width=1.5), size=6),
-                yaxis="y2",
-                hovertemplate=f'%{{y:,.0f}}{unit}, 누적 목표<extra></extra>'
-            ))
+                for k, (sub_uid, label) in enumerate(zip(reversed(sub_uids), reversed(labels))):
+                    df_sub = df_plot_base[df_plot_base["UID"] == sub_uid]
+                    df_sub = df_sub.groupby("월")[["목표", "실적"]].sum().reset_index()
+                    df_sub = df_sub[df_sub["월"].between(1, 12)]
+                    fig.add_trace(go.Bar(
+                        x=df_sub["월"],
+                        y=df_sub["실적"],
+                        name=f"실적({label})",
+                        marker_color=result_colors[k],
+                        offsetgroup=1,
+                        hovertemplate=f'%{{y:,.0f}}{unit}, 실적({label})<extra></extra>'
+                    ))
 
-            # 선: 누적 실적
-            fig.add_trace(go.Scatter(
-                x=df_plot["월"],
-                y=df_plot["누적 실적"],
-                name="누적 실적",
-                mode="lines+markers",
-                line=dict(color="#e31a1c", width=2.5),
-                marker=dict(color="#ffffff", line=dict(color="#e31a1c", width=1.5), size=6),
-                yaxis="y2",
-                hovertemplate=f'%{{y:,.0f}}{unit}, 누적 실적<extra></extra>'
-            ))
+                df_total = df_plot_base[df_plot_base["UID"] == uid]
+                df_total = df_total.groupby("월")[["목표", "실적"]].sum().reset_index()
+                df_total = df_total[df_total["월"].between(1, 12)]
+                df_total["누적 목표"] = df_total["목표"].cumsum()
+                df_total["누적 실적"] = df_total["실적"].cumsum()
 
-            # 레이아웃 설정
-            fig.update_layout(
-                barmode='group',
-                yaxis2=dict(overlaying='y', side='right', showgrid=False),
-                height=250,
-                margin=dict(t=30, b=20),
-                xaxis=dict(tickmode='linear', tick0=1, dtick=1),
-                legend=dict(orientation="h", yanchor="bottom", y=1.1, xanchor="center", x=0.5),
-                plot_bgcolor="#fafafa"
-            )
+                fig.add_trace(go.Scatter(
+                    x=df_total["월"],
+                    y=df_total["누적 목표"],
+                    name="누적 목표",
+                    mode="lines+markers",
+                    line=dict(color="#ff7f0e", width=2.5),
+                    marker=dict(color="#ffffff", line=dict(color="#ff7f0e", width=1.5), size=6),
+                    yaxis="y2",
+                    hovertemplate=f'%{{y:,.0f}}{unit}, 누적 목표<extra></extra>'
+                ))
+                fig.add_trace(go.Scatter(
+                    x=df_total["월"],
+                    y=df_total["누적 실적"],
+                    name="누적 실적",
+                    mode="lines+markers",
+                    line=dict(color="#e31a1c", width=2.5),
+                    marker=dict(color="#ffffff", line=dict(color="#e31a1c", width=1.5), size=6),
+                    yaxis="y2",
+                    hovertemplate=f'%{{y:,.0f}}{unit}, 누적 실적<extra></extra>'
+                ))
+                fig.update_layout(
+                    barmode='relative',
+                    yaxis2=dict(overlaying='y', side='right', showgrid=False),
+                    height=250,
+                    margin=dict(t=30, b=20),
+                    xaxis=dict(tickmode='linear', tick0=1, dtick=1),
+                    legend=dict(orientation="h", yanchor="bottom", y=1.1, xanchor="center", x=0.5),
+                    plot_bgcolor="#fafafa"
+                )
+
+            elif uid in BAR_LINE_UIDS:
+                df_plot = df_plot_base[df_plot_base["UID"] == uid]
+                df_plot = df_plot.groupby("월")[["목표", "실적"]].sum().reset_index()
+                df_plot = df_plot[df_plot["월"].between(1, 12)]
+
+                fig = go.Figure()
+                fig.add_trace(go.Bar(
+                    x=df_plot["월"],
+                    y=df_plot["실적"],
+                    name="월별 실적",
+                    marker_color="#e74c3c",
+                    hovertemplate=f'%{{y:,.0f}}{unit}, 월별 실적<extra></extra>'
+                ))
+                fig.add_trace(go.Scatter(
+                    x=df_plot["월"],
+                    y=df_plot["목표"],
+                    name="월별 목표",
+                    mode="lines+markers",
+                    line=dict(color="#1a6b9a", width=2),
+                    marker=dict(color="#ffffff", line=dict(color="#1a6b9a", width=2), size=6),
+                    hovertemplate=f'%{{y:,.0f}}{unit}, 월별 목표<extra></extra>'
+                ))
+                fig.update_layout(
+                    barmode='group',
+                    height=250,
+                    margin=dict(t=30, b=20),
+                    xaxis=dict(tickmode='linear', tick0=1, dtick=1),
+                    legend=dict(orientation="h", yanchor="bottom", y=1.1, xanchor="center", x=0.5),
+                    plot_bgcolor="#fafafa"
+                )
+
+            else:
+                df_plot = df_plot_base[df_plot_base["UID"] == uid]
+                df_plot = df_plot.groupby("월")[["목표", "실적"]].sum().reset_index()
+                df_plot = df_plot[df_plot["월"].between(1, 12)]
+                df_plot["누적 목표"] = df_plot["목표"].cumsum()
+                df_plot["누적 실적"] = df_plot["실적"].cumsum()
+
+                fig = go.Figure()
+                fig.add_trace(go.Bar(
+                    x=df_plot["월"],
+                    y=df_plot["목표"],
+                    name="월별 목표",
+                    marker_color="#333f50",
+                    hovertemplate=f'%{{y:,.0f}}{unit}, 월별 목표<extra></extra>'
+                ))
+                fig.add_trace(go.Bar(
+                    x=df_plot["월"],
+                    y=df_plot["실적"],
+                    name="월별 실적",
+                    marker_color="#8497b0",
+                    hovertemplate=f'%{{y:,.0f}}{unit}, 월별 실적<extra></extra>'
+                ))
+                fig.add_trace(go.Scatter(
+                    x=df_plot["월"],
+                    y=df_plot["누적 목표"],
+                    name="누적 목표",
+                    mode="lines+markers",
+                    line=dict(color="#ff7f0e", width=2.5),
+                    marker=dict(color="#ffffff", line=dict(color="#ff7f0e", width=1.5), size=6),
+                    yaxis="y2",
+                    hovertemplate=f'%{{y:,.0f}}{unit}, 누적 목표<extra></extra>'
+                ))
+                fig.add_trace(go.Scatter(
+                    x=df_plot["월"],
+                    y=df_plot["누적 실적"],
+                    name="누적 실적",
+                    mode="lines+markers",
+                    line=dict(color="#e31a1c", width=2.5),
+                    marker=dict(color="#ffffff", line=dict(color="#e31a1c", width=1.5), size=6),
+                    yaxis="y2",
+                    hovertemplate=f'%{{y:,.0f}}{unit}, 누적 실적<extra></extra>'
+                ))
+                fig.update_layout(
+                    barmode='group',
+                    yaxis2=dict(overlaying='y', side='right', showgrid=False),
+                    height=250,
+                    margin=dict(t=30, b=20),
+                    xaxis=dict(tickmode='linear', tick0=1, dtick=1),
+                    legend=dict(orientation="h", yanchor="bottom", y=1.1, xanchor="center", x=0.5),
+                    plot_bgcolor="#fafafa"
+                )
 
             st.plotly_chart(fig, use_container_width=True, key=f"plot_{uid}")
 
