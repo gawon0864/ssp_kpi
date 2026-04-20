@@ -9,7 +9,7 @@ warnings.filterwarnings('ignore')
 
 st.set_page_config(layout="wide", initial_sidebar_state="collapsed")
 
-# require_login()  # 로그인 되어 있지 않으면 여기서 차단됨
+require_login()  # 로그인 되어 있지 않으면 여기서 차단됨
 
 # 현재 연도 및 월 정보
 this_year = datetime.today().year
