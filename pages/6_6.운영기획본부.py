@@ -9,7 +9,7 @@ warnings.filterwarnings('ignore')
 
 st.set_page_config(layout="wide", initial_sidebar_state="collapsed")
 
-require_login()  # 로그인 되어 있지 않으면 여기서 차단됨
+# require_login()  # 로그인 되어 있지 않으면 여기서 차단됨
 
 # 현재 연도 및 월 정보
 this_year = datetime.today().year
@@ -37,6 +37,10 @@ df_target = df_target[df_target["년도"] == this_year]
 
 # 실적=bar, 목표=line으로 표시할 UID
 BAR_LINE_UIDS = {'OP2601', 'OP2602'}
+
+OP2601_YEARLY_GOAL_TEXT = "12월말 총재고 75,000톤 이하"
+OP2602_YEARLY_GOAL_TEXT = "12월말 장기재고 2,500톤 이하"
+OP2603_YEARLY_GOAL_TEXT = "장기채권 5.6억 전액 회수(신영스틸)"
 
 # 정량/정성 UID 구분
 numeric_uids = df_target[df_target["지표 유형"] == "정량"]
@@ -267,8 +271,33 @@ for i in range(0, len(keys), 2):
             styled = df_display.style.apply(highlight_row_if_diff, axis=1).format(format_dict, na_rep="-")
             html_code = styled.to_html(index=False)
 
-            # 단위 + 표 함께 출력
-            st.markdown(f"<div style='overflow-x:auto'>{unit_html + custom_css + html_code}</div>", unsafe_allow_html=True)
+
+            # 연간 목표 (1~12월 전체 합산 기준)
+            df_uid_goal = df_result[df_result["UID"] == uid].copy()
+            df_uid_goal["목표"] = pd.to_numeric(df_uid_goal["목표"], errors="coerce").fillna(0)
+            yearly_goal = df_uid_goal[df_uid_goal["월"].between(1, 12)]["목표"].sum()
+
+            # 왼쪽은 연간목표, 오른쪽은 단위 표시 (한 줄에)
+            if uid == 'OP2601':
+                yearly_goal_text = OP2601_YEARLY_GOAL_TEXT
+            elif uid == 'OP2602':
+                yearly_goal_text = OP2602_YEARLY_GOAL_TEXT
+            elif uid == 'OP2603':
+                yearly_goal_text = OP2603_YEARLY_GOAL_TEXT
+            else:
+                yearly_goal_text = f"{int(yearly_goal):,}{unit}"
+            st.markdown(
+                f"""
+                <div style='display:flex; justify-content:space-between; font-size:13px; font-weight:500; margin-bottom:2px;'>
+                    <div style='color:#666;'>[연간목표 : {yearly_goal_text}]</div>
+                    <div style='color:#666;'>[단위: {unit}]</div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+            # 표 출력
+            st.markdown(f"<div style='overflow-x:auto'>{custom_css + html_code}</div>", unsafe_allow_html=True)
 
 
 

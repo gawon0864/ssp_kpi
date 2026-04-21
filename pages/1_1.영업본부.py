@@ -55,6 +55,7 @@ SA2609_MONTH_LABELS = {
     '10월': '10월(휴일)', '11월': '11월(평일)', '12월': '12월(평일)'
 }
 SA2609_YEARLY_GOAL_TEXT = "1월말 6개월 초과채권 95억 대비 10억 축소"
+SA2605_YEARLY_GOAL_TEXT = "46,000톤(볼트社 : 태양, 진합, 와이엠, 선일)"
 
 # 정량/정성 UID 구분
 numeric_uids = df_target[df_target["지표 유형"] == "정량"]
@@ -394,7 +395,12 @@ for i in range(0, len(keys), 2):
             html_code = styled.to_html(index=False)
 
             # 왼쪽은 연간목표, 오른쪽은 단위 표시 (한 줄에)
-            yearly_goal_text = SA2609_YEARLY_GOAL_TEXT if uid == 'SA2609' else f"{int(yearly_goal):,}{unit}"
+            if uid == 'SA2609':
+                yearly_goal_text = SA2609_YEARLY_GOAL_TEXT
+            elif uid == 'SA2605':
+                yearly_goal_text = SA2605_YEARLY_GOAL_TEXT
+            else:
+                yearly_goal_text = f"{int(yearly_goal):,}{unit}"
             st.markdown(
                 f"""
                 <div style='display:flex; justify-content:space-between; font-size:13px; font-weight:500; margin-bottom:2px;'>
