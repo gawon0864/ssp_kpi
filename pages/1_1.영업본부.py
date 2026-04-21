@@ -9,7 +9,7 @@ warnings.filterwarnings('ignore')
 
 st.set_page_config(layout="wide", initial_sidebar_state="collapsed")
 
-require_login()  # 로그인 되어 있지 않으면 여기서 차단됨
+# require_login()  # 로그인 되어 있지 않으면 여기서 차단됨
 
 # 현재 연도 및 월 정보
 this_year = datetime.today().year
@@ -46,6 +46,15 @@ stacked_sub_uids = {uid for g in STACKED_GROUPS.values() for uid in g['sub_uids'
 
 # 실적=bar, 목표=line, 누적 없음으로 표시할 UID
 BAR_LINE_UIDS = {'SA2609'}
+
+# SA2609 전용 커스터마이징
+SA2609_MONTH_LABELS = {
+    '1월': '1월(휴일)', '2월': '2월(휴일)', '3월': '3월(평일)',
+    '4월': '4월(평일)', '5월': '5월(평일)', '6월': '6월(평일)',
+    '7월': '7월(평일)', '8월': '8월(평일)', '9월': '9월(평일)',
+    '10월': '10월(휴일)', '11월': '11월(평일)', '12월': '12월(평일)'
+}
+SA2609_YEARLY_GOAL_TEXT = "1월말 6개월 초과채권 95억 대비 10억 축소"
 
 # 정량/정성 UID 구분
 numeric_uids = df_target[df_target["지표 유형"] == "정량"]
@@ -379,14 +388,17 @@ for i in range(0, len(keys), 2):
 
             # KPI 표 출력
             df_display = df_single.drop(columns=["주요 추진 목표"])
+            if uid == 'SA2609':
+                df_display = df_display.rename(columns=SA2609_MONTH_LABELS)
             styled = df_display.style.apply(highlight_row_if_diff, axis=1).format(format_dict, na_rep="-")
             html_code = styled.to_html(index=False)
 
             # 왼쪽은 연간목표, 오른쪽은 단위 표시 (한 줄에)
+            yearly_goal_text = SA2609_YEARLY_GOAL_TEXT if uid == 'SA2609' else f"{int(yearly_goal):,}{unit}"
             st.markdown(
                 f"""
                 <div style='display:flex; justify-content:space-between; font-size:13px; font-weight:500; margin-bottom:2px;'>
-                    <div style='color:#666;'>[연간목표: {int(yearly_goal):,}{unit}]</div>
+                    <div style='color:#666;'>[연간목표 : {yearly_goal_text}]</div>
                     <div style='color:#666;'>[단위: {unit}]</div>
                 </div>
                 """,

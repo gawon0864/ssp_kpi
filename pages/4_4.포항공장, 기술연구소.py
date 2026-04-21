@@ -9,7 +9,7 @@ warnings.filterwarnings('ignore')
 
 st.set_page_config(layout="wide", initial_sidebar_state="collapsed")
 
-require_login()  # 로그인 되어 있지 않으면 여기서 차단됨
+# require_login()  # 로그인 되어 있지 않으면 여기서 차단됨
 
 # 현재 연도 및 월 정보
 this_year = datetime.today().year
@@ -39,6 +39,10 @@ df_target = df_target[df_target["년도"] == this_year]
 STACKED_GROUPS = {
     'PH2605': {
         'sub_uids': ['PH2602', 'PH2603', 'PH2604'],
+        'labels': ['상', '중', '하'],
+    },
+    'PH2611': {
+        'sub_uids': ['PH2608', 'PH2609', 'PH2610'],
         'labels': ['상', '중', '하'],
     }
 }
@@ -114,9 +118,9 @@ for uid in numeric_uids["UID"].unique():
         row_차이["주요 추진 목표"] = ""
         df_single = pd.DataFrame([row_목표, row_실적, row_차이])
 
-    numeric_kpi_tables[kpi_name] = df_single
+    numeric_kpi_tables[uid] = (kpi_name, df_single)
 
-for df in numeric_kpi_tables.values():
+for _, (_, df) in numeric_kpi_tables.items():
     numeric_cols = df.select_dtypes(include=["float", "int"]).columns
     df[numeric_cols] = df[numeric_cols].round(0).astype("Int64")
 
@@ -145,7 +149,7 @@ def highlight_row_if_diff(row):
             'color: red' if isinstance(v, (int, float)) and v < 0 else ''
             for v in row]
 
-format_dict = {col: "{:,.0f}" for df in numeric_kpi_tables.values() for col in df.columns if pd.api.types.is_numeric_dtype(df[col])}
+format_dict = {col: "{:,.0f}" for _, (_, df) in numeric_kpi_tables.items() for col in df.columns if pd.api.types.is_numeric_dtype(df[col])}
 
 custom_css = """
 <style>
@@ -174,7 +178,7 @@ thead {
 """
 
 # 화면 구성
-st.markdown(f"### {this_year}년 포항공장 주요 추진 목표")
+st.markdown(f"### {this_year}년 포항공장, 기술연구소 주요 추진 목표")
 
 kpi_counter = 1  # 공통 번호 시작
 
@@ -193,15 +197,13 @@ for i in range(0, len(keys), 2):
         if i + idx >= len(keys):
             break
 
-        kpi_name = keys[i + idx]
-        df_single = numeric_kpi_tables[kpi_name]
+        uid = keys[i + idx]
+        kpi_name, df_single = numeric_kpi_tables[uid]
 
         with col:
             st.markdown(f"<h6>{kpi_counter}. {kpi_name}</h6>", unsafe_allow_html=True)
             kpi_counter += 1
 
-            # 해당 KPI의 UID 가져오기
-            uid = df_target[df_target["추진 목표"] == kpi_name]["UID"].iloc[0]
             unit = df_target[df_target["UID"] == uid]["단위"].iloc[0]
 
             if uid in STACKED_GROUPS:

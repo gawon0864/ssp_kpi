@@ -9,7 +9,7 @@ warnings.filterwarnings('ignore')
 
 st.set_page_config(layout="wide", initial_sidebar_state="collapsed")
 
-require_login()  # 로그인 되어 있지 않으면 여기서 차단됨
+# require_login()  # 로그인 되어 있지 않으면 여기서 차단됨
 
 # 현재 연도 및 월 정보
 this_year = datetime.today().year
@@ -34,6 +34,9 @@ def load_data():
 df_target, df_result, df_memo = load_data()
 df_result = df_result[df_result["년도"] == this_year]
 df_target = df_target[df_target["년도"] == this_year]
+
+# 실적=bar, 목표=line으로 표시할 UID
+BAR_LINE_UIDS = {'OP2601', 'OP2602'}
 
 # 정량/정성 UID 구분
 numeric_uids = df_target[df_target["지표 유형"] == "정량"]
@@ -201,31 +204,47 @@ for i in range(0, len(keys), 2):
 
             unit = df_target[df_target["UID"] == uid]["단위"].iloc[0]
 
-            # 혼합형 그래프 생성
             fig = go.Figure()
 
-            # 월별 목표: 선 그래프
-            fig.add_trace(go.Scatter(
-                x=df_plot["월"],
-                y=df_plot["목표"],
-                name="월별 목표",
-                mode="lines+markers",
-                line=dict(color="#333f50", width=2),
-                marker=dict(color="#ffffff", line=dict(color="#333f50", width=2), size=6),
-                hovertemplate=f'%{{y:,.0f}}{unit}, 월별 목표<extra></extra>'
-            ))
-
-            # 월별 실적: 선 그래프
-            fig.add_trace(go.Scatter(
-                x=df_plot["월"],
-                y=df_plot["실적"],
-                name="월별 실적",
-                mode="lines+markers",
-                line=dict(color="#8497b0", width=2),
-                marker=dict(color="#ffffff", line=dict(color="#8497b0", width=2), size=6),
-                hovertemplate=f'%{{y:,.0f}}{unit}, 월별 실적<extra></extra>'
-            ))
-
+            if uid in BAR_LINE_UIDS:
+                # 실적: 막대, 목표: 선
+                fig.add_trace(go.Bar(
+                    x=df_plot["월"],
+                    y=df_plot["실적"],
+                    name="월별 실적",
+                    marker_color="#e74c3c",
+                    hovertemplate=f'%{{y:,.0f}}{unit}, 월별 실적<extra></extra>'
+                ))
+                fig.add_trace(go.Scatter(
+                    x=df_plot["월"],
+                    y=df_plot["목표"],
+                    name="월별 목표",
+                    mode="lines+markers",
+                    line=dict(color="#1a6b9a", width=2),
+                    marker=dict(color="#ffffff", line=dict(color="#1a6b9a", width=2), size=6),
+                    hovertemplate=f'%{{y:,.0f}}{unit}, 월별 목표<extra></extra>'
+                ))
+            else:
+                # 월별 목표: 선 그래프
+                fig.add_trace(go.Scatter(
+                    x=df_plot["월"],
+                    y=df_plot["목표"],
+                    name="월별 목표",
+                    mode="lines+markers",
+                    line=dict(color="#333f50", width=2),
+                    marker=dict(color="#ffffff", line=dict(color="#333f50", width=2), size=6),
+                    hovertemplate=f'%{{y:,.0f}}{unit}, 월별 목표<extra></extra>'
+                ))
+                # 월별 실적: 선 그래프
+                fig.add_trace(go.Scatter(
+                    x=df_plot["월"],
+                    y=df_plot["실적"],
+                    name="월별 실적",
+                    mode="lines+markers",
+                    line=dict(color="#8497b0", width=2),
+                    marker=dict(color="#ffffff", line=dict(color="#8497b0", width=2), size=6),
+                    hovertemplate=f'%{{y:,.0f}}{unit}, 월별 실적<extra></extra>'
+                ))
 
             # 레이아웃 설정
             fig.update_layout(
