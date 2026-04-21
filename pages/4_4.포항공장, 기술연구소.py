@@ -37,12 +37,12 @@ df_target = df_target[df_target["년도"] == this_year]
 
 # 상/중/하 스택 그룹: 전체 UID → 서브 UID 매핑
 STACKED_GROUPS = {
-    'PH2605': {
-        'sub_uids': ['PH2602', 'PH2603', 'PH2604'],
+    'PH2604': {
+        'sub_uids': ['PH2601', 'PH2602', 'PH2603'],
         'labels': ['상', '중', '하'],
     },
-    'PH2611': {
-        'sub_uids': ['PH2608', 'PH2609', 'PH2610'],
+    'PH2608': {
+        'sub_uids': ['PH2605', 'PH2606', 'PH2607'],
         'labels': ['상', '중', '하'],
     }
 }
@@ -56,7 +56,7 @@ numeric_kpi_tables = {}
 
 for uid in numeric_uids["UID"].unique():
     if uid in stacked_sub_uids:
-        continue  # 상/중/하 개별 UID는 전체(PH2605)로 통합 표시
+        continue  # 상/중/하 개별 UID는 전체(PH2604, PH2608)로 통합 표시
     kpi_name = df_target[df_target["UID"] == uid]["추진 목표"].iloc[0]
 
     if uid in STACKED_GROUPS:
