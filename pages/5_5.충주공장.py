@@ -37,8 +37,8 @@ df_target = df_target[df_target["년도"] == this_year]
 
 # 상/중/하 스택 그룹: 전체 UID → 서브 UID 매핑
 STACKED_GROUPS = {
-    'CJ2605': {
-        'sub_uids': ['CJ2602', 'CJ2603', 'CJ2604'],
+    'CJ2604': {
+        'sub_uids': ['CJ2601', 'CJ2602', 'CJ2603'],
         'labels': ['상', '중', '하'],
     }
 }
