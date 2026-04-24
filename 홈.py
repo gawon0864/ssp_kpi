@@ -237,17 +237,26 @@ def create_vehicle_production_chart():
     df = load_data()
 
     fig = go.Figure()
-    fig.add_trace(go.Bar(x=df["기간"], y=df["국내생산"], name="국내생산", marker_color="#3399FF"))
-    fig.add_trace(go.Bar(x=df["기간"], y=df["해외생산"], name="해외생산", marker_color="#FF9933"))
-    fig.add_trace(go.Bar(x=df["기간"], y=df["KD"], name="KD", marker_color="#999999"))
+    fig.add_trace(go.Bar(x=df["기간"], y=df["국내생산"], name="국내생산", marker_color="#3399FF", yaxis="y1"))
+    fig.add_trace(go.Bar(x=df["기간"], y=df["해외생산"], name="해외생산", marker_color="#FF9933", yaxis="y1"))
+    fig.add_trace(go.Bar(x=df["기간"], y=df["KD"], name="KD", marker_color="#999999", yaxis="y1"))
+    fig.add_trace(go.Scatter(
+        x=df["기간"], y=df["부품수출액(백만불)"],
+        name="부품수출액(백만불)",
+        mode="lines+markers",
+        line=dict(color="#E53935", width=2),
+        marker=dict(size=5),
+        yaxis="y2"
+    ))
 
     fig.update_layout(
         barmode='stack',
-        title="🚗 자동차 생산량 추이 (국내/해외/KD)",
+        title="🚗 자동차 생산량 및 부품수출액 추이",
         xaxis_title="기간",
-        yaxis_title="생산량",
+        yaxis=dict(title="생산량", side="left"),
+        yaxis2=dict(title="부품수출액(백만불)", side="right", overlaying="y", showgrid=False),
         height=500,
-        margin=dict(t=80, b=40, l=40, r=20),
+        margin=dict(t=80, b=40, l=40, r=60),
         xaxis_tickangle=-45,
         legend=dict(orientation="h", x=0.5, xanchor="center", y=1.15)
     )
