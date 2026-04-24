@@ -230,6 +230,10 @@ kama_path = st.secrets["google_sheets"]["kama_url"]
 def load_data():
     df_kama = pd.read_csv(kama_path)
     df_kama.columns = df_kama.columns.str.strip()
+    # 부품수출액 컬럼명 정규화 (괄호 문자 인코딩 차이 대응)
+    export_col = next((c for c in df_kama.columns if "부품수출액" in c), None)
+    if export_col and export_col != "부품수출액(백만불)":
+        df_kama = df_kama.rename(columns={export_col: "부품수출액(백만불)"})
     df_kama["기간"] = df_kama["년"].astype(str) + "-" + df_kama["월"].astype(str).str.zfill(2)
     return df_kama
 
