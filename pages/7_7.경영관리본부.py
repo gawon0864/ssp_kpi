@@ -141,23 +141,24 @@ thead {
 """
 
 # =========================
-# 정성 KPI 전용 CSS (열 폭 고정 + 빈 월은 좁게)
+# 정성 KPI 전용 CSS (수직 레이아웃: 월 = 행)
 # =========================
 textual_css = """
 <style>
-table.textual {
+table.textual-v {
     border-collapse: collapse;
     font-family: 'Noto Sans KR', sans-serif;
     font-size: 13px;
     line-height: 1.4;
-    table-layout: fixed;           /* 열 폭 고정 */
+    width: 50%;
+    max-width: 100%;
 }
-table.textual thead {
+table.textual-v thead {
     background-color: #f2f2f2;
     font-weight: bold;
 }
-table.textual th,
-table.textual td {
+table.textual-v th,
+table.textual-v td {
     padding: 6px 10px;
     text-align: left;
     border: 1px solid #ddd;
@@ -165,23 +166,13 @@ table.textual td {
     white-space: pre-wrap;
     word-break: break-word;
 }
-table.textual th.month-full,
-table.textual td.month-full {
-    width: 300px;
-    min-width: 300px;
-    max-width: 300px;
+table.textual-v .month-col {
+    width: 52px;
+    min-width: 52px;
+    text-align: center;
 }
-table.textual th.month-empty,
-table.textual td.month-empty {
-    width: 80px;
-    min-width: 80px;
-    max-width: 80px;
-}
-table.textual th:first-child,
-table.textual td:first-child {
-    width: 90px;
-    min-width: 90px;
-    max-width: 90px;
+table.textual-v .content-col {
+    min-width: 120px;
 }
 </style>
 """
@@ -330,82 +321,64 @@ def format_text_cell(val):
     return s
 
 # =========================
-# 정성 KPI: 목표 셀 병합 + 빈 월 좁게
+# 정성 KPI: 수직 레이아웃 (월 = 행, 목표/실적 = 열)
 # =========================
 def generate_merged_html_table(df):
-    months = [f"{m}월" for m in range(1, 13)]
+    all_months = [f"{m}월" for m in range(1, 13)]
 
-    # 각 월이 목표/실적 전체 기준으로 비어 있는지 확인
-    month_status = {}
-    for m in months:
-        if m in df.columns:
-            col = df[m]
-            is_empty = ((col.isna()) | (col == "")).all()
-            month_status[m] = "empty" if is_empty else "full"
+    target_row = df[df['구분'] == '목표'].iloc[0] if not df[df['구분'] == '목표'].empty else None
+    result_row = df[df['구분'] == '실적'].iloc[0] if not df[df['구분'] == '실적'].empty else None
+
+    # 데이터가 있는 월만 표시
+    visible_months = []
+    for m in all_months:
+        t_val = target_row.get(m, "") if target_row is not None else ""
+        r_val = result_row.get(m, "") if result_row is not None else ""
+        if not ((pd.isna(t_val) or t_val == "") and (pd.isna(r_val) or r_val == "")):
+            visible_months.append(m)
+
+    if not visible_months:
+        visible_months = all_months
+
+    # 목표 열 rowspan 계산 (연속 동일 값 병합)
+    target_vals = [target_row.get(m, "") if target_row is not None else "" for m in visible_months]
+    rowspan_info = []  # (span, should_render)
+    i = 0
+    while i < len(visible_months):
+        key = None if (pd.isna(target_vals[i]) or target_vals[i] == "") else str(target_vals[i])
+        if key is None:
+            rowspan_info.append((1, True))
+            i += 1
         else:
-            month_status[m] = "empty"
+            j = i + 1
+            while j < len(visible_months):
+                next_key = None if (pd.isna(target_vals[j]) or target_vals[j] == "") else str(target_vals[j])
+                if next_key == key:
+                    j += 1
+                else:
+                    break
+            span = j - i
+            rowspan_info.append((span, True))
+            for _ in range(i + 1, j):
+                rowspan_info.append((span, False))
+            i = j
 
-    # 헤더 생성 (월별로 클래스 부여)
-    header_html = "<tr><th>구분</th>"
-    for m in months:
-        cls = "month-empty" if month_status[m] == "empty" else "month-full"
-        header_html += f"<th class='{cls}'>{m}</th>"
-    header_html += "</tr>"
+    html = "<table class='textual-v'><thead><tr><th class='month-col'>월</th><th class='content-col'>목표</th><th class='content-col'>실적</th></tr></thead><tbody>"
 
-    html = "<table class='textual'><thead>" + header_html + "</thead><tbody>"
-
-    for idx, row in df.iterrows():
+    for idx, m in enumerate(visible_months):
         html += "<tr>"
-        html += f"<td style='text-align:left'>{row['구분']}</td>"
+        html += f"<td class='month-col'>{m}</td>"
 
-        if row['구분'] == "목표":
-            last_val_key = None
-            span = 0
-            last_cls = None
+        span, should_render = rowspan_info[idx]
+        if should_render:
+            raw_val = target_row.get(m, "") if target_row is not None else ""
+            cell_html = format_text_cell(raw_val)
+            rs = f" rowspan='{span}'" if span > 1 else ""
+            html += f"<td class='content-col'{rs}>{cell_html}</td>"
 
-            for m in months:
-                raw_val = row.get(m, "")
-                is_empty = pd.isna(raw_val) or raw_val == ""
-                key = None if is_empty else str(raw_val)
-                display_val = format_text_cell(raw_val)
-                cls = "month-empty" if month_status[m] == "empty" else "month-full"
-
-                if key is not None and key == last_val_key and cls == last_cls:
-                    # 같은 내용 + 같은 폭 클래스면 병합 유지
-                    span += 1
-                else:
-                    # 이전 블록 출력
-                    if last_val_key is not None:
-                        if span > 1:
-                            html += f"<td class='{last_cls}' colspan='{span}' style='text-align:left'>{last_display_val}</td>"
-                        else:
-                            html += f"<td class='{last_cls}' style='text-align:left'>{last_display_val}</td>"
-
-                    # 이번 셀 처리
-                    if key is None:
-                        html += f"<td class='{cls}' style='text-align:left'>-</td>"
-                        last_val_key = None
-                        last_cls = None
-                        span = 0
-                    else:
-                        last_val_key = key
-                        last_display_val = display_val
-                        last_cls = cls
-                        span = 1
-
-            # 루프가 끝난 후 마지막 블록 출력
-            if last_val_key is not None and span > 0:
-                if span > 1:
-                    html += f"<td class='{last_cls}' colspan='{span}' style='text-align:left'>{last_display_val}</td>"
-                else:
-                    html += f"<td class='{last_cls}' style='text-align:left'>{last_display_val}</td>"
-
-        else:  # 실적 행: 병합 없이 출력
-            for m in months:
-                raw_val = row.get(m, "")
-                cell_html = format_text_cell(raw_val)
-                cls = "month-empty" if month_status[m] == "empty" else "month-full"
-                html += f"<td class='{cls}' style='text-align:left'>{cell_html}</td>"
+        raw_val = result_row.get(m, "") if result_row is not None else ""
+        cell_html = format_text_cell(raw_val)
+        html += f"<td class='content-col'>{cell_html}</td>"
 
         html += "</tr>"
 

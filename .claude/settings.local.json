@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(sed -n '180,200p' \"c:/Users/SeAH/Documents/Kpi_Dash/pages/4_4.포항공장, 기술연구소.py\")",
+      "Bash(sed -n '176,196p' \"c:/Users/SeAH/Documents/Kpi_Dash/pages/5_5.충주공장.py\")",
+      "Bash(sed -n '157,175p' \"c:/Users/SeAH/Documents/Kpi_Dash/pages/6_6.운영기획본부.py\")",
+      "Bash(sed -n '151,170p' \"c:/Users/SeAH/Documents/Kpi_Dash/pages/9_9.중국법인.py\")",
+      "Bash(sed -n '152,170p' \"c:/Users/SeAH/Documents/Kpi_Dash/pages/10_10.태국법인.py\")"
+    ]
+  }
+}
