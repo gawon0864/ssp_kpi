@@ -43,7 +43,7 @@ def get_user_info(access_token):
 
 # ======== 인증 처리 ========
 st.set_page_config(
-    page_title="세아특수강 본부별 주요 추진 목표 및 실적 대시보드",
+    page_title="본부별 주요 추진 목표 및 실적 대시보드",
     layout="wide",
     initial_sidebar_state="expanded"
 )
