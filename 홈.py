@@ -187,7 +187,7 @@ def create_price_chart(df):
         y=df_recent["철광석(달러_톤)"],
         name="철광석 ($/톤)",
         mode="lines+markers",
-        line=dict(color="#1f77b4", width=2),
+        line=dict(color="#1f77b4", width=3),
         marker=dict(size=4),
         yaxis="y1"
     ))
@@ -197,7 +197,7 @@ def create_price_chart(df):
         y=df_recent["철스크랩(달러_톤)"],
         name="철스크랩 ($/톤)",
         mode="lines+markers",
-        line=dict(color="#aec7e8", width=2),
+        line=dict(color="#aec7e8", width=3),
         marker=dict(size=4),
         yaxis="y2"
     ))
@@ -248,7 +248,7 @@ def create_vehicle_production_chart():
         x=df["기간"], y=df["부품수출액(백만불)"],
         name="부품수출액(백만불)",
         mode="lines+markers",
-        line=dict(color="#e31a1c", width=2.5),
+        line=dict(color="#e31a1c", width=3),
         marker=dict(color="#ffffff", line=dict(color="#e31a1c", width=1.5), size=4),
         yaxis="y2"
     ))
