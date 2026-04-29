@@ -43,7 +43,7 @@ def get_user_info(access_token):
 
 # ======== 인증 처리 ========
 st.set_page_config(
-    page_title="본부별 주요 추진 목표 및 실적 대시보드",
+    page_title="세아특수강 본부별 주요 추진 목표 및 실적 대시보드",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -153,7 +153,7 @@ st.markdown(custom_home_css, unsafe_allow_html=True)
 # ======== 상단 타이틀 ========
 st.markdown('<div class="centered">', unsafe_allow_html=True)
 st.image("logo.gif", width=200)
-st.markdown("<h1>세아특수강 본부별 주요 추진 목표 및 실적</h1>", unsafe_allow_html=True)
+st.markdown("<h1>본부별 주요 추진 목표 및 실적</h1>", unsafe_allow_html=True)
 
 # ======== 공공데이터 API 연동 함수 ========
 @st.cache_data
