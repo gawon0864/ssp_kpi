@@ -261,7 +261,10 @@ def create_vehicle_production_chart():
             tickangle=-45,
             dtick="M1",
             tickformat="%Y-%m",
-            range=[df["기간"].min(), df["기간"].max()],
+            range=[
+                (pd.to_datetime(df["기간"].min()) - pd.Timedelta(days=15)).strftime("%Y-%m-%d"),
+                (pd.to_datetime(df["기간"].max()) + pd.Timedelta(days=15)).strftime("%Y-%m-%d"),
+            ],
         ),
         yaxis=dict(title="생산량", side="left"),
         yaxis2=dict(title="부품수출액(백만불)", side="right", overlaying="y", showgrid=False),
