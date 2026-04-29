@@ -241,15 +241,15 @@ def create_vehicle_production_chart():
     df = load_data()
 
     fig = go.Figure()
-    fig.add_trace(go.Bar(x=df["기간"], y=df["국내생산"], name="국내생산", marker_color="#3399FF", yaxis="y1"))
-    fig.add_trace(go.Bar(x=df["기간"], y=df["해외생산"], name="해외생산", marker_color="#FF9933", yaxis="y1"))
-    fig.add_trace(go.Bar(x=df["기간"], y=df["KD"], name="KD", marker_color="#999999", yaxis="y1"))
+    fig.add_trace(go.Bar(x=df["기간"], y=df["국내생산"], name="국내생산", marker_color="#5dade2", yaxis="y1"))
+    fig.add_trace(go.Bar(x=df["기간"], y=df["해외생산"], name="해외생산", marker_color="#1a6b9a", yaxis="y1"))
+    fig.add_trace(go.Bar(x=df["기간"], y=df["KD"], name="KD", marker_color="#0d1b2a", yaxis="y1"))
     fig.add_trace(go.Scatter(
         x=df["기간"], y=df["부품수출액(백만불)"],
         name="부품수출액(백만불)",
         mode="lines+markers",
-        line=dict(color="#e95e4f", width=2.5),
-        marker=dict(color="#ffffff", line=dict(color="#e95e4f", width=1.5), size=4),
+        line=dict(color="#7b241c", width=2.5),
+        marker=dict(color="#ffffff", line=dict(color="#7b241c", width=1.5), size=4),
         yaxis="y2"
     ))
 
@@ -267,36 +267,12 @@ def create_vehicle_production_chart():
     return fig
 
 # ======== 본문 콘텐츠 구성 ========
-top_left, top_right = st.columns([1, 1])
+df_price = fetch_raw_material_data()
+fig_price = create_price_chart(df_price)
+st.plotly_chart(fig_price, use_container_width=True)
 
-with top_left:
-    st.markdown("<div class='section-label'>📌 대시보드 개요</div>", unsafe_allow_html=True)
-    st.markdown("""
-    <div class='card'>
-        세아특수강의 본부별 주요 추진 목표 및 실적을 체계적으로 관리하기 위한 DX 기반 성과관리 시스템입니다.<br>
-        당월 기준 실적 비교, 누적 달성률, 메모 기반 질적 피드백 등을 한눈에 확인할 수 있습니다.
-    </div>
-    """, unsafe_allow_html=True)
-
-with top_right:
-    st.markdown("<div class='section-label'>🎯 활용 목적</div>", unsafe_allow_html=True)
-    st.markdown("""
-    <div class='card'>
-        주요 추진 목표 달성 현황을 직관적으로 파악하고, 월별 실행 성과와 차이를 분석하며<br>
-        전략 방향성을 개선하기 위한 실시간 참고 자료로 사용 가능합니다.
-    </div>
-    """, unsafe_allow_html=True)
-
-bottom_left, bottom_right = st.columns([1, 1])
-
-with bottom_left:
-    df_price = fetch_raw_material_data()
-    fig_price = create_price_chart(df_price)
-    st.plotly_chart(fig_price, use_container_width=True)
-
-with bottom_right:
-    fig_production = create_vehicle_production_chart()
-    st.plotly_chart(fig_production, use_container_width=True)
+fig_production = create_vehicle_production_chart()
+st.plotly_chart(fig_production, use_container_width=True)
 
 # ======== 푸터 ========
 st.markdown("""
