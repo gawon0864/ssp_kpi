@@ -248,8 +248,8 @@ def create_vehicle_production_chart():
         x=df["기간"], y=df["부품수출액(백만불)"],
         name="부품수출액(백만불)",
         mode="lines+markers",
-        line=dict(color="#7b241c", width=2.5),
-        marker=dict(color="#ffffff", line=dict(color="#7b241c", width=1.5), size=4),
+        line=dict(color="#e31a1c", width=2.5),
+        marker=dict(color="#ffffff", line=dict(color="#e31a1c", width=1.5), size=4),
         yaxis="y2"
     ))
 
