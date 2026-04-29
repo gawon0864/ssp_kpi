@@ -257,11 +257,15 @@ def create_vehicle_production_chart():
         barmode='stack',
         title="🚗 자동차 생산량 및 부품수출액 추이",
         xaxis_title="기간",
+        xaxis=dict(
+            tickangle=-45,
+            dtick="M1",
+            tickformat="%Y-%m",
+        ),
         yaxis=dict(title="생산량", side="left"),
         yaxis2=dict(title="부품수출액(백만불)", side="right", overlaying="y", showgrid=False),
         height=500,
         margin=dict(t=120, b=40, l=40, r=60),
-        xaxis_tickangle=-45,
         legend=dict(orientation="h", x=0.5, xanchor="center", y=1.15)
     )
     return fig
