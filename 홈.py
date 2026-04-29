@@ -249,7 +249,7 @@ def create_vehicle_production_chart():
         name="부품수출액(백만불)",
         mode="lines+markers",
         line=dict(color="#e31a1c", width=3),
-        marker=dict(color="#ffffff", line=dict(color="#e31a1c", width=2), size=4),
+        marker=dict(color="#ffffff", line=dict(color="#e31a1c", width=2), size=5),
         yaxis="y2"
     ))
 
