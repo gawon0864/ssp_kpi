@@ -267,12 +267,12 @@ def create_vehicle_production_chart():
     return fig
 
 # ======== 본문 콘텐츠 구성 ========
+fig_production = create_vehicle_production_chart()
+st.plotly_chart(fig_production, use_container_width=True)
+
 df_price = fetch_raw_material_data()
 fig_price = create_price_chart(df_price)
 st.plotly_chart(fig_price, use_container_width=True)
-
-fig_production = create_vehicle_production_chart()
-st.plotly_chart(fig_production, use_container_width=True)
 
 # ======== 푸터 ========
 st.markdown("""
