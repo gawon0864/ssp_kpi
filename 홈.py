@@ -241,9 +241,9 @@ def create_vehicle_production_chart():
     df = load_data()
 
     fig = go.Figure()
-    fig.add_trace(go.Bar(x=df["기간"], y=df["국내생산"], name="국내생산", marker_color="#5dade2", yaxis="y1"))
-    fig.add_trace(go.Bar(x=df["기간"], y=df["해외생산"], name="해외생산", marker_color="#1a6b9a", yaxis="y1"))
-    fig.add_trace(go.Bar(x=df["기간"], y=df["KD"], name="KD", marker_color="#0d1b2a", yaxis="y1"))
+    fig.add_trace(go.Bar(x=df["기간"], y=df["국내생산"]/1000, name="국내생산", marker_color="#5dade2", yaxis="y1"))
+    fig.add_trace(go.Bar(x=df["기간"], y=df["해외생산"]/1000, name="해외생산", marker_color="#1a6b9a", yaxis="y1"))
+    fig.add_trace(go.Bar(x=df["기간"], y=df["KD"]/1000, name="KD", marker_color="#0d1b2a", yaxis="y1"))
     fig.add_trace(go.Scatter(
         x=df["기간"], y=df["부품수출액(백만불)"],
         name="부품수출액(백만불)",
@@ -266,7 +266,7 @@ def create_vehicle_production_chart():
                 (pd.to_datetime(df["기간"].max()) + pd.Timedelta(days=15)).strftime("%Y-%m-%d"),
             ],
         ),
-        yaxis=dict(title="생산량", side="left"),
+        yaxis=dict(title="생산량", side="left", ticksuffix="천"),
         yaxis2=dict(title="부품수출액(백만불)", side="right", overlaying="y", showgrid=False),
         height=500,
         margin=dict(t=120, b=40, l=40, r=60),
