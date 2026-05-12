@@ -41,6 +41,8 @@ textual_uids = df_target[df_target["지표 유형"] == "정성"]
 
 numeric_kpi_tables = {}
 
+NO_CUMUL_UIDS = {'AT2604'}
+
 for uid in numeric_uids["UID"].unique():
     kpi_name = df_target[df_target["UID"] == uid]["추진 목표"].iloc[0]
     df_uid = df_result[df_result["UID"] == uid].copy()
@@ -84,9 +86,10 @@ for uid in numeric_uids["UID"].unique():
         #else:
         #    row_차이[f"{m}월"] = None
 
-    row_목표["누적"] = total_목표
-    row_실적["누적"] = total_실적
-    row_차이["누적"] = total_실적 - total_목표
+    if uid not in NO_CUMUL_UIDS:
+        row_목표["누적"] = total_목표
+        row_실적["누적"] = total_실적
+        row_차이["누적"] = total_실적 - total_목표
     row_실적["주요 추진 목표"] = ""
     row_차이["주요 추진 목표"] = ""
 
@@ -302,61 +305,85 @@ for i in range(0, len(keys), 2):
 
             unit = df_target[df_target["UID"] == uid]["단위"].iloc[0]
 
-            # 혼합형 그래프 생성
             fig = go.Figure()
 
-            # 월별 막대: 목표
-            fig.add_trace(go.Bar(
-                x=df_plot["월"],
-                y=df_plot["목표"],
-                name="월별 목표",
-                marker_color="#333f50",
-                hovertemplate=f'%{{y:,.0f}}{unit}, 월별 목표<extra></extra>'
-            ))
+            if uid in NO_CUMUL_UIDS:
+                # 월별 목표: 선 그래프
+                fig.add_trace(go.Scatter(
+                    x=df_plot["월"],
+                    y=df_plot["목표"],
+                    name="월별 목표",
+                    mode="lines+markers",
+                    line=dict(color="#333f50", width=2),
+                    marker=dict(color="#ffffff", line=dict(color="#333f50", width=2), size=6),
+                    hovertemplate=f'%{{y:,.0f}}{unit}, 월별 목표<extra></extra>'
+                ))
+                # 월별 실적: 선 그래프
+                fig.add_trace(go.Scatter(
+                    x=df_plot["월"],
+                    y=df_plot["실적"],
+                    name="월별 실적",
+                    mode="lines+markers",
+                    line=dict(color="#8497b0", width=2),
+                    marker=dict(color="#ffffff", line=dict(color="#8497b0", width=2), size=6),
+                    hovertemplate=f'%{{y:,.0f}}{unit}, 월별 실적<extra></extra>'
+                ))
+            else:
+                # 혼합형 그래프 생성
+                # 월별 막대: 목표
+                fig.add_trace(go.Bar(
+                    x=df_plot["월"],
+                    y=df_plot["목표"],
+                    name="월별 목표",
+                    marker_color="#333f50",
+                    hovertemplate=f'%{{y:,.0f}}{unit}, 월별 목표<extra></extra>'
+                ))
 
-            # 월별 막대: 실적
-            fig.add_trace(go.Bar(
-                x=df_plot["월"],
-                y=df_plot["실적"],
-                name="월별 실적",
-                marker_color="#8497b0",
-                hovertemplate=f'%{{y:,.0f}}{unit}, 월별 실적<extra></extra>'
-            ))
+                # 월별 막대: 실적
+                fig.add_trace(go.Bar(
+                    x=df_plot["월"],
+                    y=df_plot["실적"],
+                    name="월별 실적",
+                    marker_color="#8497b0",
+                    hovertemplate=f'%{{y:,.0f}}{unit}, 월별 실적<extra></extra>'
+                ))
 
-            # 선: 누적 목표
-            fig.add_trace(go.Scatter(
-                x=df_plot["월"],
-                y=df_plot["누적 목표"],
-                name="누적 목표",
-                mode="lines+markers",
-                line=dict(color="#ff7f0e", width=2.5),
-                marker=dict(color="#ffffff", line=dict(color="#ff7f0e", width=1.5), size=6),
-                yaxis="y2",
-                hovertemplate=f'%{{y:,.0f}}{unit}, 누적 목표<extra></extra>'
-            ))
+                # 선: 누적 목표
+                fig.add_trace(go.Scatter(
+                    x=df_plot["월"],
+                    y=df_plot["누적 목표"],
+                    name="누적 목표",
+                    mode="lines+markers",
+                    line=dict(color="#ff7f0e", width=2.5),
+                    marker=dict(color="#ffffff", line=dict(color="#ff7f0e", width=1.5), size=6),
+                    yaxis="y2",
+                    hovertemplate=f'%{{y:,.0f}}{unit}, 누적 목표<extra></extra>'
+                ))
 
-            # 선: 누적 실적
-            fig.add_trace(go.Scatter(
-                x=df_plot["월"],
-                y=df_plot["누적 실적"],
-                name="누적 실적",
-                mode="lines+markers",
-                line=dict(color="#e31a1c", width=2.5),
-                marker=dict(color="#ffffff", line=dict(color="#e31a1c", width=1.5), size=6),
-                yaxis="y2",
-                hovertemplate=f'%{{y:,.0f}}{unit}, 누적 실적<extra></extra>'
-            ))
+                # 선: 누적 실적
+                fig.add_trace(go.Scatter(
+                    x=df_plot["월"],
+                    y=df_plot["누적 실적"],
+                    name="누적 실적",
+                    mode="lines+markers",
+                    line=dict(color="#e31a1c", width=2.5),
+                    marker=dict(color="#ffffff", line=dict(color="#e31a1c", width=1.5), size=6),
+                    yaxis="y2",
+                    hovertemplate=f'%{{y:,.0f}}{unit}, 누적 실적<extra></extra>'
+                ))
 
             # 레이아웃 설정
-            fig.update_layout(
+            layout_kwargs = dict(
                 barmode='group',
-                yaxis2=dict(overlaying='y', side='right', showgrid=False),
                 height=250,
                 margin=dict(t=30, b=20),
                 xaxis=dict(tickmode='linear', tick0=1, dtick=1),
                 legend=dict(orientation="h", yanchor="bottom", y=1.1, xanchor="center", x=0.5),
                 plot_bgcolor="#fafafa"
             )
+            if uid not in NO_CUMUL_UIDS:
+                layout_kwargs["yaxis2"] = dict(overlaying='y', side='right', showgrid=False)
+            fig.update_layout(**layout_kwargs)
 
             st.plotly_chart(fig, use_container_width=True, key=f"plot_{uid}")
 
@@ -371,7 +398,8 @@ for i in range(0, len(keys), 2):
             unit_html = f"<div style='text-align:right; font-size:13px; color:#666; margin-bottom:2px;'>[단위: {unit_text}]</div>"
 
             # KPI 표 출력
-            df_display = df_single.drop(columns=["주요 추진 목표"])
+            drop_cols = ["주요 추진 목표"] + (["누적"] if uid in NO_CUMUL_UIDS else [])
+            df_display = df_single.drop(columns=drop_cols, errors="ignore")
             styled = df_display.style.apply(highlight_row_if_diff, axis=1).format(format_dict, na_rep="-")
             html_code = styled.to_html(index=False)
 
