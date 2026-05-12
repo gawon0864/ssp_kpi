@@ -308,25 +308,22 @@ for i in range(0, len(keys), 2):
             fig = go.Figure()
 
             if uid in NO_CUMUL_UIDS:
-                # 월별 목표: 선 그래프
+                # 실적: 막대, 목표: 선
+                fig.add_trace(go.Bar(
+                    x=df_plot["월"],
+                    y=df_plot["실적"],
+                    name="월별 실적",
+                    marker_color="#e74c3c",
+                    hovertemplate=f'%{{y:,.0f}}{unit}, 월별 실적<extra></extra>'
+                ))
                 fig.add_trace(go.Scatter(
                     x=df_plot["월"],
                     y=df_plot["목표"],
                     name="월별 목표",
                     mode="lines+markers",
-                    line=dict(color="#333f50", width=2),
-                    marker=dict(color="#ffffff", line=dict(color="#333f50", width=2), size=6),
+                    line=dict(color="#1a6b9a", width=2),
+                    marker=dict(color="#ffffff", line=dict(color="#1a6b9a", width=2), size=6),
                     hovertemplate=f'%{{y:,.0f}}{unit}, 월별 목표<extra></extra>'
-                ))
-                # 월별 실적: 선 그래프
-                fig.add_trace(go.Scatter(
-                    x=df_plot["월"],
-                    y=df_plot["실적"],
-                    name="월별 실적",
-                    mode="lines+markers",
-                    line=dict(color="#8497b0", width=2),
-                    marker=dict(color="#ffffff", line=dict(color="#8497b0", width=2), size=6),
-                    hovertemplate=f'%{{y:,.0f}}{unit}, 월별 실적<extra></extra>'
                 ))
             else:
                 # 혼합형 그래프 생성
