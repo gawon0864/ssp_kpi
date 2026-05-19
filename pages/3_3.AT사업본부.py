@@ -43,6 +43,8 @@ numeric_kpi_tables = {}
 
 NO_CUMUL_UIDS = {'AT2604'}
 
+AT2604_YEARLY_GOAL_TEXT = "12월말 불용재고 67백만원 이하"
+
 for uid in numeric_uids["UID"].unique():
     kpi_name = df_target[df_target["UID"] == uid]["추진 목표"].iloc[0]
     df_uid = df_result[df_result["UID"] == uid].copy()
@@ -401,10 +403,14 @@ for i in range(0, len(keys), 2):
             html_code = styled.to_html(index=False)
 
             # 왼쪽은 연간목표, 오른쪽은 단위 표시 (한 줄에)
+            if uid == 'AT2604':
+                yearly_goal_text = AT2604_YEARLY_GOAL_TEXT
+            else:
+                yearly_goal_text = f"{int(yearly_goal):,}{unit}"
             st.markdown(
                 f"""
                 <div style='display:flex; justify-content:space-between; font-size:13px; font-weight:500; margin-bottom:2px;'>
-                    <div style='color:#666;'>[연간목표: {int(yearly_goal):,}{unit}]</div>
+                    <div style='color:#666;'>[연간목표: {yearly_goal_text}]</div>
                     <div style='color:#666;'>[단위: {unit}]</div>
                 </div>
                 """,
