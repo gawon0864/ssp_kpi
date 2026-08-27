@@ -50,7 +50,7 @@ BAR_LINE_UIDS = {'SA2609'}
 # SA2609 전용 커스터마이징
 SA2609_MONTH_LABELS = {
     '1월': '1월(휴일)', '2월': '2월(휴일)', '3월': '3월(평일)',
-    '4월': '4월(평일)', '5월': '5월(평일)', '6월': '6월(평일)',
+    '4월': '4월(평일)', '5월': '5월(휴일)', '6월': '6월(평일)',
     '7월': '7월(평일)', '8월': '8월(평일)', '9월': '9월(평일)',
     '10월': '10월(휴일)', '11월': '11월(평일)', '12월': '12월(평일)'
 }
@@ -521,6 +521,7 @@ for i in range(0, len(keys), 2):
             # KPI 표 출력
             df_display = df_single.drop(columns=["주요 추진 목표"])
             if uid == 'SA2609':
+                df_display = df_display.drop(columns=["누적"])
                 df_display = df_display.rename(columns=SA2609_MONTH_LABELS)
             styled = df_display.style.apply(highlight_row_if_diff, axis=1).format(format_dict, na_rep="-")
             html_code = styled.to_html(index=False)
